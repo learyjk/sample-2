@@ -1,27 +1,33 @@
 import { Actor, Engine, Vector, CollisionType, Color, PreCollisionEvent, CollisionGroup } from 'excalibur';
 import { GameConfig } from '@/config';
-import { ProjectileCollisionGroupConfig } from '@/CollisionGroups';
+import { ProjectileCollisionGroupConfig, EnemyProjectileCollisionGroupConfig } from '@/CollisionGroups';
 import { Enemy } from '@/Actors/enemies/Enemy';
 import { Obstacle } from '@/Actors/Obstacle';
+import { Player } from '@/Actors/Player';
 
 export class Projectile extends Actor {
     private speed: number = GameConfig.projectile.speed; // pixels per second
     private targetPosition: Vector;
     public hitEnemy: boolean = false; // Track if this projectile hit an enemy
+    public isEnemyProjectile: boolean = false; // Track if this is an enemy projectile
 
-    constructor(startPosition: Vector, targetPosition: Vector, collisionGroup?: CollisionGroup) {
+    constructor(startPosition: Vector, targetPosition: Vector, collisionGroup?: CollisionGroup, isEnemyProjectile: boolean = false, speed?: number) {
         // Calculate projectile radius as a small percentage of game width
         const radius = GameConfig.width * 0.001;
 
         super({
             pos: startPosition.clone(),
             radius: radius,
-            color: Color.White,
+            color: isEnemyProjectile ? Color.Orange : Color.White,
             collisionType: CollisionType.Passive,
-            collisionGroup: collisionGroup || ProjectileCollisionGroupConfig,
+            collisionGroup: collisionGroup || (isEnemyProjectile ? EnemyProjectileCollisionGroupConfig : ProjectileCollisionGroupConfig),
         });
 
         this.targetPosition = targetPosition;
+        this.isEnemyProjectile = isEnemyProjectile;
+        if (speed !== undefined) {
+            this.speed = speed;
+        }
     }
 
     public onInitialize(_engine: Engine): void {
@@ -38,8 +44,8 @@ export class Projectile extends Actor {
     }
 
     private onPreCollision(evt: PreCollisionEvent): void {
-        // Check if we hit an enemy (check evt.other.owner for the Actor, like Galaga pattern)
-        if (evt.other.owner instanceof Enemy) {
+        // Player projectiles hit enemies
+        if (!this.isEnemyProjectile && evt.other.owner instanceof Enemy) {
             if (!this.hitEnemy) {
                 this.hitEnemy = true;
                 // Emit event so player can track accuracy
@@ -48,7 +54,13 @@ export class Projectile extends Actor {
             }
         }
 
-        // Check if we hit an obstacle
+        // Enemy projectiles hit player
+        if (this.isEnemyProjectile && evt.other.owner instanceof Player) {
+            console.log('💥 Player was hit by enemy bullet! 💥');
+            this.kill();
+        }
+
+        // All projectiles hit obstacles
         if (evt.other.owner instanceof Obstacle) {
             this.kill();
         }

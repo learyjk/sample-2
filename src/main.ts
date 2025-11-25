@@ -3,8 +3,8 @@ import { Engine, Color, DisplayMode, Vector, Actor, CollisionType } from 'excali
 import './style.css'
 import { Player } from '@/Actors/Player'
 import { GameConfig } from '@/config'
-import { Enemy } from '@/Actors/enemies/Enemy';
 import { Obstacle } from '@/Actors/Obstacle';
+import { EnemyFactory } from '@/Actors/enemies';
 
 const engine = new Engine({
   width: GameConfig.width,
@@ -87,12 +87,28 @@ for (let i = 0; i < obstacleCount; i++) {
 
 // --- Actors ---
 
-// Create and add enemy to the scene
-// Spawn in the safe zone
+// Create and add enemies to the scene using the factory
+// Spawn in the enemy safe zone
 const enemyX = GameConfig.width - (spawnZoneWidth / 2); // Center of right zone
-const enemyY = Math.random() * (GameConfig.height - 40) + 20; // Random Y
-const enemy = new Enemy(new Vector(enemyX, enemyY));
-engine.add(enemy);
+
+// Enemy 1: Stationary Shooter (Red) - Top of spawn zone
+const enemy1 = EnemyFactory.create('STATIONARY_SHOOTER', new Vector(enemyX, 60));
+if (enemy1) {
+  engine.add(enemy1);
+}
+
+// Enemy 2: Patrol Shooter (Orange) - Middle of spawn zone
+const enemy2 = EnemyFactory.create('PATROL_SHOOTER', new Vector(enemyX, GameConfig.height / 2));
+if (enemy2) {
+  engine.add(enemy2);
+}
+
+// Enemy 3: Chase Shooter (Yellow) - Bottom of spawn zone
+const enemy3 = EnemyFactory.create('CHASE_SHOOTER', new Vector(enemyX, GameConfig.height - 60));
+if (enemy3) {
+  engine.add(enemy3);
+}
+
 
 // Create and add player to the scene
 const player = new Player();

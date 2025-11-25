@@ -24,7 +24,8 @@ const createConfig = (identity: CollisionGroup, collidesWith: CollisionGroup[]) 
  */
 export const PlayerCollisionGroupConfig = createConfig(PlayerCollisionGroup, [
     EnemyCollisionGroup,
-    ObstacleCollisionGroup
+    ObstacleCollisionGroup,
+    ProjectileCollisionGroup // Player can be hit by enemy projectiles (which use ProjectileCollisionGroup)
 ]);
 
 export const EnemyCollisionGroupConfig = createConfig(EnemyCollisionGroup, [
@@ -42,5 +43,12 @@ export const ObstacleCollisionGroupConfig = createConfig(ObstacleCollisionGroup,
     PlayerCollisionGroup,
     EnemyCollisionGroup,
     ProjectileCollisionGroup
+]);
+
+// Enemy projectiles use the same collision group as player projectiles
+// but are distinguished by the isEnemyProjectile flag
+export const EnemyProjectileCollisionGroupConfig = createConfig(ProjectileCollisionGroup, [
+    PlayerCollisionGroup,
+    ObstacleCollisionGroup
 ]);
 
