@@ -29,6 +29,47 @@ export class Player extends Actor {
   }
 
   public onInitialize(_engine: Engine): void {
+    // Setup health bar drawing using graphics.onPostDraw
+    this.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
+      ctx.save();
+
+      // Draw health bar above player
+      // Calculate bar dimensions based on actor size
+      const actorSize = this.collider.bounds.width || this.width || 20;
+      const barWidth = actorSize * 2; // Width of health bar
+      const barHeight = 3; // Height of health bar
+      const barOffsetY = -(actorSize / 2) - barHeight - 5; // Position above player
+
+      // Calculate health percentage
+      const healthPercent = Math.max(0, this.health / this.maxHealth);
+
+      // Draw background (red/dark) - full width
+      ctx.drawRectangle(
+        new Vector(-barWidth / 2, barOffsetY),
+        barWidth,
+        barHeight,
+        Color.Red
+      );
+
+      // Draw health (green) - scaled by health percentage
+      ctx.drawRectangle(
+        new Vector(-barWidth / 2, barOffsetY),
+        barWidth * healthPercent,
+        barHeight,
+        Color.Green
+      );
+
+      // Draw border (white outline) - draw as stroke only
+      ctx.drawRectangle(
+        new Vector(-barWidth / 2, barOffsetY),
+        barWidth,
+        barHeight,
+        Color.Transparent,
+        Color.White
+      );
+
+      ctx.restore();
+    };
   }
 
   public onPreUpdate(engine: Engine, _delta: number): void {
@@ -71,10 +112,6 @@ export class Player extends Actor {
       this.kill();
       console.log('Player died!');
     }
-  }
-
-  public onPostDraw(_ctx: ExcaliburGraphicsContext, _delta: number): void {
-    return;
   }
 
   private shoot(engine: Engine): void {
@@ -159,3 +196,4 @@ export class Player extends Actor {
     this.hitsLanded = 0;
   }
 }
+

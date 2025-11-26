@@ -1,4 +1,5 @@
 import { Actor, Engine, Vector, CollisionType, Color, PreCollisionEvent } from 'excalibur';
+import type { ExcaliburGraphicsContext } from 'excalibur';
 import { GameConfig } from '@/config';
 import { EnemyCollisionGroupConfig } from '@/CollisionGroups';
 import { Projectile } from '@/Actors/Projectile';
@@ -9,6 +10,7 @@ export class Enemy extends Actor {
   private behavior: IEnemyBehavior | null = null;
   private config: EnemyConfig | null = null;
   public health: number = GameConfig.enemy.health;
+  public maxHealth: number = GameConfig.enemy.health; // Track max health for health bar
 
   constructor(position?: Vector, configOrBehavior?: EnemyConfig | IEnemyBehavior) {
     // Handle both old (behavior) and new (config) API for backwards compatibility
@@ -53,6 +55,7 @@ export class Enemy extends Actor {
     // Set health from config
     if (config?.stats?.health) {
       this.health = config.stats.health;
+      this.maxHealth = config.stats.health;
     }
   }
 
@@ -93,6 +96,48 @@ export class Enemy extends Actor {
     if (this.behavior) {
       this.behavior.onInitialize?.(this, engine);
     }
+
+    // Setup health bar drawing using graphics.onPostDraw
+    this.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
+      ctx.save();
+
+      // Draw health bar above enemy
+      // Calculate bar dimensions based on actor size
+      const actorSize = this.collider.bounds.width || this.width || 20;
+      const barWidth = actorSize * 2; // Width of health bar
+      const barHeight = 3; // Height of health bar
+      const barOffsetY = -(actorSize / 2) - barHeight - 5; // Position above enemy
+
+      // Calculate health percentage
+      const healthPercent = Math.max(0, this.health / this.maxHealth);
+
+      // Draw background (red/dark) - full width
+      ctx.drawRectangle(
+        new Vector(-barWidth / 2, barOffsetY),
+        barWidth,
+        barHeight,
+        Color.Red
+      );
+
+      // Draw health (green) - scaled by health percentage
+      ctx.drawRectangle(
+        new Vector(-barWidth / 2, barOffsetY),
+        barWidth * healthPercent,
+        barHeight,
+        Color.Green
+      );
+
+      // Draw border (white outline) - draw as stroke only
+      ctx.drawRectangle(
+        new Vector(-barWidth / 2, barOffsetY),
+        barWidth,
+        barHeight,
+        Color.Transparent,
+        Color.White // stroke color
+      );
+
+      ctx.restore();
+    };
   }
 
   public onPreUpdate(engine: Engine, delta: number): void {
@@ -119,7 +164,7 @@ export class Enemy extends Actor {
 
   public takeDamage(amount: number): void {
     this.health -= amount;
-    console.log(`Enemy took ${amount} damage. Health: ${this.health}`);
+    console.log(`Enemy took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
     if (this.health <= 0) {
       this.kill();
       console.log('Enemy died!');

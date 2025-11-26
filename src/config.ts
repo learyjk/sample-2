@@ -21,9 +21,9 @@ export const GameConfig = {
   enemy: {
     radiusPercent: 0.01, // Same size as player by default
     speed: 50, // pixels per second (slower than player)
-    health: 10,
+    health: 50,
     shooting: {
-      cooldown: 1000, // milliseconds between shots (default)
+      cooldown: 800, // milliseconds between shots (default)
       projectileSpeed: 150, // pixels per second (default)
       accuracy: {
         baseAccuracy: 0.8, // 80% base accuracy (0.0 to 1.0)
