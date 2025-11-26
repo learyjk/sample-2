@@ -80,14 +80,27 @@ export class Player extends Actor {
   private shoot(engine: Engine): void {
     this.shotsFired++;
 
-    const enemy = engine.currentScene.actors.find(actor => {
+    // Find all enemies
+    const enemies = engine.currentScene.actors.filter(actor => {
       return actor instanceof Enemy;
-    }) as Enemy | undefined;
+    }) as Enemy[];
+
+    // Find the nearest enemy
+    let nearestEnemy: Enemy | undefined;
+    let minDistance = Infinity;
+
+    for (const enemy of enemies) {
+      const distance = this.pos.distance(enemy.pos);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestEnemy = enemy;
+      }
+    }
 
     let targetPosition: Vector;
 
-    if (enemy) {
-      const baseDirection = enemy.pos.sub(this.pos).normalize();
+    if (nearestEnemy) {
+      const baseDirection = nearestEnemy.pos.sub(this.pos).normalize();
       const spreadAmount = GameConfig.player.accuracy.spreadAngle * (1 - GameConfig.player.accuracy.baseAccuracy);
       const randomAngle = (Math.random() - 0.5) * spreadAmount * 2;
 
@@ -98,9 +111,10 @@ export class Player extends Actor {
         baseDirection.x * sin + baseDirection.y * cos
       );
 
-      const distanceToEnemy = this.pos.distance(enemy.pos);
+      const distanceToEnemy = this.pos.distance(nearestEnemy.pos);
       targetPosition = this.pos.add(spreadDirection.scale(distanceToEnemy));
     } else {
+      // No enemies, shoot forward based on facing direction
       const shootDistance = 100;
       const spreadAmount = GameConfig.player.accuracy.spreadAngle * (1 - GameConfig.player.accuracy.baseAccuracy);
       const randomAngle = (Math.random() - 0.5) * spreadAmount * 2;
