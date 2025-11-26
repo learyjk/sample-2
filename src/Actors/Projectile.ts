@@ -1,17 +1,16 @@
 import { Actor, Engine, Vector, CollisionType, Color, PreCollisionEvent, CollisionGroup } from 'excalibur';
 import { GameConfig } from '@/config';
 import { ProjectileCollisionGroupConfig, EnemyProjectileCollisionGroupConfig } from '@/CollisionGroups';
-import { Enemy } from '@/Actors/enemies/Enemy';
 import { Obstacle } from '@/Actors/Obstacle';
-import { Player } from '@/Actors/Player';
 
 export class Projectile extends Actor {
     private speed: number = GameConfig.projectile.speed; // pixels per second
     private targetPosition: Vector;
     public hitEnemy: boolean = false; // Track if this projectile hit an enemy
     public isEnemyProjectile: boolean = false; // Track if this is an enemy projectile
+    public damage: number = GameConfig.projectile.damage;
 
-    constructor(startPosition: Vector, targetPosition: Vector, collisionGroup?: CollisionGroup, isEnemyProjectile: boolean = false, speed?: number) {
+    constructor(startPosition: Vector, targetPosition: Vector, collisionGroup?: CollisionGroup, isEnemyProjectile: boolean = false, speed?: number, damage?: number) {
         // Calculate projectile radius as a small percentage of game width
         const radius = GameConfig.width * 0.001;
 
@@ -27,6 +26,9 @@ export class Projectile extends Actor {
         this.isEnemyProjectile = isEnemyProjectile;
         if (speed !== undefined) {
             this.speed = speed;
+        }
+        if (damage !== undefined) {
+            this.damage = damage;
         }
     }
 
@@ -44,20 +46,36 @@ export class Projectile extends Actor {
     }
 
     private onPreCollision(evt: PreCollisionEvent): void {
+        const other = evt.other.owner;
+        if (!other) return;
+
+        // Helper to check if actor has takeDamage method
+        const isDamageable = (actor: any): actor is { takeDamage: (amount: number) => void } => {
+            return actor && typeof actor.takeDamage === 'function';
+        };
+
         // Player projectiles hit enemies
-        if (!this.isEnemyProjectile && evt.other.owner instanceof Enemy) {
-            if (!this.hitEnemy) {
-                this.hitEnemy = true;
-                // Emit event so player can track accuracy
-                this.emit('hitEnemy', { enemy: evt.other.owner });
-                this.kill();
+        if (!this.isEnemyProjectile) {
+            // Check if it's damageable and NOT the player (to be safe)
+            if (isDamageable(other) && other.name !== 'player') {
+                if (!this.hitEnemy) {
+                    this.hitEnemy = true;
+                    other.takeDamage(this.damage);
+
+                    // Emit event so player can track accuracy
+                    this.emit('hitEnemy', { enemy: other });
+                    this.kill();
+                }
             }
         }
 
         // Enemy projectiles hit player
-        if (this.isEnemyProjectile && evt.other.owner instanceof Player) {
-            console.log('💥 Player was hit by enemy bullet! 💥');
-            this.kill();
+        if (this.isEnemyProjectile) {
+            // Check if it's damageable and IS the player
+            if (isDamageable(other) && other.name === 'player') {
+                other.takeDamage(this.damage);
+                this.kill();
+            }
         }
 
         // All projectiles hit obstacles

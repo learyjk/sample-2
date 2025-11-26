@@ -8,7 +8,7 @@ import type { EnemyConfig } from './EnemyConfig';
 export class Enemy extends Actor {
   private behavior: IEnemyBehavior | null = null;
   private config: EnemyConfig | null = null;
-  public health: number = 1;
+  public health: number = GameConfig.enemy.health;
 
   constructor(position?: Vector, configOrBehavior?: EnemyConfig | IEnemyBehavior) {
     // Handle both old (behavior) and new (config) API for backwards compatibility
@@ -38,6 +38,7 @@ export class Enemy extends Actor {
     const sprite = config?.appearance?.sprite;
 
     super({
+      name: 'Enemy',
       pos,
       radius,
       color: sprite ? undefined : color, // Only set color if no sprite
@@ -108,9 +109,20 @@ export class Enemy extends Actor {
     if (evt.other.owner instanceof Projectile) {
       // Only take damage from player projectiles
       if (!evt.other.owner.isEnemyProjectile) {
-        console.log('💥 Enemy was hit by a bullet! 💥');
-        // Enemy hit logic can go here
+        // Projectile handles calling takeDamage on us, or we can do it here.
+        // But Projectile.ts has the logic to kill itself.
+        // Let's rely on Projectile.ts to handle the impact logic to avoid double damage if both handle it.
+        // Or better, we define takeDamage and let Projectile call it.
       }
+    }
+  }
+
+  public takeDamage(amount: number): void {
+    this.health -= amount;
+    console.log(`Enemy took ${amount} damage. Health: ${this.health}`);
+    if (this.health <= 0) {
+      this.kill();
+      console.log('Enemy died!');
     }
   }
 }

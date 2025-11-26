@@ -8,6 +8,8 @@ import { Enemy } from '@/Actors/enemies/Enemy';
 export class Player extends Actor {
   private speed: number = GameConfig.player.speed;
   private facingDirection: Vector = new Vector(1, 0);
+  public maxHealth: number = GameConfig.player.health;
+  public health: number = GameConfig.player.health;
 
   private shotsFired: number = 0;
   private hitsLanded: number = 0;
@@ -17,6 +19,7 @@ export class Player extends Actor {
     const centerY = GameConfig.height / 2;
 
     super({
+      name: 'player',
       pos: new Vector(10, centerY),
       radius: radius,
       color: Color.Blue,
@@ -61,7 +64,17 @@ export class Player extends Actor {
     }
   }
 
+  public takeDamage(amount: number): void {
+    this.health -= amount;
+    console.log(`Player took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
+    if (this.health <= 0) {
+      this.kill();
+      console.log('Player died!');
+    }
+  }
+
   public onPostDraw(_ctx: ExcaliburGraphicsContext, _delta: number): void {
+    return;
   }
 
   private shoot(engine: Engine): void {

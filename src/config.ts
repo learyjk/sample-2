@@ -10,6 +10,7 @@ export const GameConfig = {
   player: {
     radiusPercent: 0.01,
     speed: 100, // pixels per second
+    health: 100,
     accuracy: {
       baseAccuracy: 0.95, // 95% base accuracy (0.0 to 1.0)
       spreadAngle: 0.1, // Maximum spread angle in radians (about 5.7 degrees)
@@ -20,6 +21,7 @@ export const GameConfig = {
   enemy: {
     radiusPercent: 0.01, // Same size as player by default
     speed: 50, // pixels per second (slower than player)
+    health: 10,
     shooting: {
       cooldown: 1000, // milliseconds between shots (default)
       projectileSpeed: 150, // pixels per second (default)
@@ -33,6 +35,7 @@ export const GameConfig = {
   // Projectile configuration
   projectile: {
     speed: 200, // pixels per second
+    damage: 10,
   },
 
   // Obstacle configuration
