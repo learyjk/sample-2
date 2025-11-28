@@ -3,11 +3,11 @@ import { ObstacleCollisionGroupConfig } from '@/CollisionGroups';
 import { GameConfig } from '@/config';
 
 export class Obstacle extends Actor {
-    constructor(position: Vector) {
+    constructor(position: Vector, width?: number, height?: number) {
         super({
             pos: position,
-            width: GameConfig.obstacle.size,
-            height: GameConfig.obstacle.size,
+            width: width ?? GameConfig.obstacle.size,
+            height: height ?? GameConfig.obstacle.size,
             color: Color.Gray,
             collisionType: CollisionType.Fixed, // Immovable
             collisionGroup: ObstacleCollisionGroupConfig, // Base group

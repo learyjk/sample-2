@@ -85,6 +85,42 @@ for (let i = 0; i < obstacleCount; i++) {
   }
 }
 
+// --- Boundary Walls ---
+// Create 4 walls around the screen edges to prevent actors from moving off-screen
+const wallThickness = 10;
+
+// Top wall
+const topWall = new Obstacle(
+  new Vector(GameConfig.width / 2, wallThickness / 2),
+  GameConfig.width,
+  wallThickness
+);
+engine.add(topWall);
+
+// Bottom wall
+const bottomWall = new Obstacle(
+  new Vector(GameConfig.width / 2, GameConfig.height - wallThickness / 2),
+  GameConfig.width,
+  wallThickness
+);
+engine.add(bottomWall);
+
+// Left wall
+const leftWall = new Obstacle(
+  new Vector(wallThickness / 2, GameConfig.height / 2),
+  wallThickness,
+  GameConfig.height
+);
+engine.add(leftWall);
+
+// Right wall
+const rightWall = new Obstacle(
+  new Vector(GameConfig.width - wallThickness / 2, GameConfig.height / 2),
+  wallThickness,
+  GameConfig.height
+);
+engine.add(rightWall);
+
 // --- Actors ---
 
 // Create and add enemies to the scene using the factory
