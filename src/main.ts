@@ -89,24 +89,48 @@ for (let i = 0; i < obstacleCount; i++) {
 
 // Create and add enemies to the scene using the factory
 // Spawn in the enemy safe zone
-const enemyX = GameConfig.width - (spawnZoneWidth / 2); // Center of right zone
+const enemyZoneLeft = GameConfig.width - spawnZoneWidth;
+const enemyZoneTop = 0;
 
-// Enemy 1: Stationary Shooter (Red) - Top of spawn zone
-const enemy1 = EnemyFactory.create('STATIONARY_SHOOTER', new Vector(enemyX, 60));
-if (enemy1) {
-  engine.add(enemy1);
-}
+// Enemy types to spawn
+const enemyTypes = [
+  'STATIONARY_SHOOTER',
+  'PATROL_SHOOTER',
+  'CHASE_SHOOTER',
+  'FAST_SHOOTER',
+];
 
-// Enemy 2: Patrol Shooter (Orange) - Middle of spawn zone
-const enemy2 = EnemyFactory.create('PATROL_SHOOTER', new Vector(enemyX, GameConfig.height / 2));
-if (enemy2) {
-  engine.add(enemy2);
-}
+// Total number of enemies to spawn
+const totalEnemies = 20;
 
-// Enemy 3: Chase Shooter (Yellow) - Bottom of spawn zone
-const enemy3 = EnemyFactory.create('CHASE_SHOOTER', new Vector(enemyX, GameConfig.height - 60));
-if (enemy3) {
-  engine.add(enemy3);
+// Spawn enemies distributed across the enemy spawn zone
+for (let i = 0; i < totalEnemies; i++) {
+  // Random position within enemy spawn zone
+  const margin = 20; // Margin from edges
+  const x = enemyZoneLeft + margin + Math.random() * (spawnZoneWidth - 2 * margin);
+  const y = enemyZoneTop + margin + Math.random() * (GameConfig.height - 2 * margin);
+
+  // Select enemy type (distribute evenly, but with some randomness)
+  let enemyType: string;
+  if (i < 5) {
+    // First 5: Stationary shooters
+    enemyType = 'STATIONARY_SHOOTER';
+  } else if (i < 10) {
+    // Next 5: Patrol shooters
+    enemyType = 'PATROL_SHOOTER';
+  } else if (i < 15) {
+    // Next 5: Chase shooters
+    enemyType = 'CHASE_SHOOTER';
+  } else {
+    // Last 5: Mix of all types (weighted random)
+    const randomIndex = Math.floor(Math.random() * enemyTypes.length);
+    enemyType = enemyTypes[randomIndex];
+  }
+
+  const enemy = EnemyFactory.create(enemyType, new Vector(x, y));
+  if (enemy) {
+    engine.add(enemy);
+  }
 }
 
 

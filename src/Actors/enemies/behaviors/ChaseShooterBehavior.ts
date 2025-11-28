@@ -4,6 +4,7 @@ import { Enemy } from '../Enemy';
 import { Projectile } from '@/Actors/Projectile';
 import { GameConfig } from '@/config';
 import { Player } from '@/Actors/Player';
+import { Pathfinding } from '../utils/Pathfinding';
 
 /**
  * Enemy chases the player while shooting at them
@@ -18,13 +19,20 @@ export class ChaseShooterBehavior implements IEnemyBehavior {
     const player = engine.currentScene.actors.find(actor => actor instanceof Player) as Player | undefined;
 
     if (player) {
-      const direction = player.pos.sub(enemy.pos);
-      const distance = direction.size;
+      const distance = enemy.pos.distance(player.pos);
 
       // Only chase if not too close
       if (distance > this.minDistance) {
-        const normalizedDirection = direction.normalize();
-        enemy.vel = normalizedDirection.scale(this.chaseSpeed);
+        // Use pathfinding to navigate around obstacles
+        const direction = Pathfinding.getDirectionToGoal(enemy, player.pos, engine, 1);
+        
+        if (direction.size > 0) {
+          enemy.vel = direction.scale(this.chaseSpeed);
+        } else {
+          // Fallback: direct path if pathfinding fails
+          const directDirection = player.pos.sub(enemy.pos).normalize();
+          enemy.vel = directDirection.scale(this.chaseSpeed);
+        }
       } else {
         // Stop if too close
         enemy.vel = Vector.Zero;
