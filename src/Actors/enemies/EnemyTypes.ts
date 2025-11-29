@@ -1,6 +1,6 @@
 import { Color } from 'excalibur';
 import type { EnemyConfig } from './EnemyConfig';
-import { StationaryShooterBehavior, PatrolShooterBehavior, ChaseShooterBehavior } from './behaviors';
+import { StationaryShooterBehavior, PatrolShooterBehavior, ChaseShooterBehavior, HideAndShootBehavior } from './behaviors';
 import { GameConfig } from '@/config';
 
 /**
@@ -17,10 +17,12 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     },
     behavior: new StationaryShooterBehavior(),
     stats: {
-      speed: 0, // Doesn't move
+      speed: GameConfig.enemy.stationary.speed,
+      health: GameConfig.enemy.stationary.health,
     },
     shooting: {
       enabled: true,
+      cooldown: GameConfig.enemy.stationary.shooting.cooldown,
     },
   },
 
@@ -33,11 +35,12 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     },
     behavior: new PatrolShooterBehavior(),
     stats: {
-      speed: GameConfig.enemy.speed,
+      speed: GameConfig.enemy.patrol.speed,
+      health: GameConfig.enemy.patrol.health,
     },
     shooting: {
       enabled: true,
-      cooldown: GameConfig.enemy.shooting.cooldown * 1.5, // Slower shooting
+      cooldown: GameConfig.enemy.patrol.shooting.cooldown,
     },
   },
 
@@ -50,11 +53,30 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     },
     behavior: new ChaseShooterBehavior(),
     stats: {
-      speed: GameConfig.enemy.speed * 0.8, // Slightly slower
+      speed: GameConfig.enemy.chase.speed,
+      health: GameConfig.enemy.chase.health,
     },
     shooting: {
       enabled: true,
-      cooldown: GameConfig.enemy.shooting.cooldown * 2, // Slower shooting while chasing
+      cooldown: GameConfig.enemy.chase.shooting.cooldown,
+    },
+  },
+
+  // Tactical enemy that hides behind obstacles
+  TACTICAL_SHOOTER: {
+    id: 'tactical_shooter',
+    name: 'Tactical Shooter',
+    appearance: {
+      color: Color.Violet,
+    },
+    behavior: new HideAndShootBehavior(),
+    stats: {
+      speed: GameConfig.enemy.tactical.speed,
+      health: GameConfig.enemy.tactical.health,
+    },
+    shooting: {
+      enabled: true,
+      cooldown: GameConfig.enemy.tactical.shooting.cooldown,
     },
   },
 
@@ -67,12 +89,13 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     },
     behavior: new StationaryShooterBehavior(), // Could create a new behavior
     stats: {
-      speed: GameConfig.enemy.speed * 1.5, // Faster
+      speed: GameConfig.enemy.fast.speed,
+      health: GameConfig.enemy.fast.health,
     },
     shooting: {
       enabled: true,
-      cooldown: GameConfig.enemy.shooting.cooldown * 0.7, // Faster shooting
-      projectileSpeed: GameConfig.enemy.shooting.projectileSpeed * 1.2, // Faster projectiles
+      cooldown: GameConfig.enemy.fast.shooting.cooldown,
+      projectileSpeed: GameConfig.enemy.fast.shooting.projectileSpeed,
     },
   },
 };

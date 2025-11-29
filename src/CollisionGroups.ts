@@ -8,6 +8,7 @@ export const PlayerCollisionGroup = CollisionGroupManager.create('player');
 export const EnemyCollisionGroup = CollisionGroupManager.create('enemy');
 export const ProjectileCollisionGroup = CollisionGroupManager.create('projectile');
 export const ObstacleCollisionGroup = CollisionGroupManager.create('obstacle');
+export const FamiliarCollisionGroup = CollisionGroupManager.create('familiar');
 
 /**
  * Helper to combine identity with collision mask.
@@ -49,6 +50,10 @@ export const ObstacleCollisionGroupConfig = createConfig(ObstacleCollisionGroup,
 // but are distinguished by the isEnemyProjectile flag
 export const EnemyProjectileCollisionGroupConfig = createConfig(ProjectileCollisionGroup, [
     PlayerCollisionGroup,
+    ObstacleCollisionGroup
+]);
+
+export const FamiliarCollisionGroupConfig = createConfig(FamiliarCollisionGroup, [
     ObstacleCollisionGroup
 ]);
 

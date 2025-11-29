@@ -14,6 +14,11 @@ export class Player extends Actor {
   private shotsFired: number = 0;
   private hitsLanded: number = 0;
 
+  // Buff state
+  private tetherBuffActive: boolean = false;
+  private tetherHealTimer: number = 0;
+  private readonly HEAL_INTERVAL: number = GameConfig.familiar.buffs.healInterval;
+
   constructor() {
     const radius = GameConfig.width * GameConfig.player.radiusPercent;
     const centerY = GameConfig.height / 2;
@@ -103,11 +108,42 @@ export class Player extends Actor {
     if (engine.input.keyboard.wasPressed(Keys.ShiftRight) || engine.input.keyboard.wasPressed(Keys.Space)) {
       this.shoot(engine);
     }
+
+    // Handle Tether Buff (Regeneration)
+    if (this.tetherBuffActive && this.health < this.maxHealth) {
+      this.tetherHealTimer += _delta;
+      if (this.tetherHealTimer >= this.HEAL_INTERVAL) {
+        this.health = Math.min(this.health + GameConfig.familiar.buffs.healAmount, this.maxHealth);
+        this.tetherHealTimer = 0;
+        // Visual feedback could be added here
+      }
+    }
+  }
+
+  public activateTetherBuff() {
+    if (!this.tetherBuffActive) {
+      this.tetherBuffActive = true;
+      console.log("Player: Tether Buff Activated");
+    }
+  }
+
+  public deactivateTetherBuff() {
+    if (this.tetherBuffActive) {
+      this.tetherBuffActive = false;
+      console.log("Player: Tether Buff Deactivated");
+    }
   }
 
   public takeDamage(amount: number): void {
-    this.health -= amount;
-    console.log(`Player took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
+    // Apply damage reduction if tether is active
+    let actualDamage = amount;
+    if (this.tetherBuffActive) {
+      actualDamage = Math.ceil(amount * GameConfig.familiar.buffs.damageReduction);
+      console.log("Tether reduced damage!");
+    }
+
+    this.health -= actualDamage;
+    console.log(`Player took ${actualDamage} damage. Health: ${this.health}/${this.maxHealth}`);
     if (this.health <= 0) {
       this.kill();
       console.log('Player died!');
@@ -166,11 +202,16 @@ export class Player extends Actor {
       targetPosition = this.pos.add(spreadDirection.scale(shootDistance));
     }
 
-    const projectile = new Projectile(this.pos.clone(), targetPosition);
-
+    const projectile = new Projectile(
+      this.pos.clone(),
+      targetPosition,
+      undefined,
+      false, // isEnemyProjectile
+      GameConfig.player.projectileSpeed
+    );
+    
     projectile.on('hitEnemy', () => {
       this.hitsLanded++;
-      console.log('🎯 BULLET HIT ENEMY! 🎯');
     });
 
     engine.add(projectile);
@@ -196,4 +237,3 @@ export class Player extends Actor {
     this.hitsLanded = 0;
   }
 }
-

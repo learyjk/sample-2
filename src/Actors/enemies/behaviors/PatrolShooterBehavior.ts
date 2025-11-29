@@ -8,8 +8,8 @@ import { ObstacleAvoidance } from '../utils/ObstacleAvoidance';
 
 export class PatrolShooterBehavior implements IEnemyBehavior {
   private lastShotTime: number = 0;
-  private shootCooldown: number = GameConfig.enemy.shooting.cooldown * 1.5; // Slower shooting
-  private patrolSpeed: number = GameConfig.enemy.speed;
+  private shootCooldown: number = GameConfig.enemy.patrol.shooting.cooldown; // Slower shooting
+  private patrolSpeed: number = GameConfig.enemy.patrol.speed;
   private patrolDirection: Vector = new Vector(1, 0); // Current patrol direction
   private startPos: Vector = Vector.Zero;
   private patrolRange: number = 100; // pixels
@@ -104,8 +104,8 @@ export class PatrolShooterBehavior implements IEnemyBehavior {
     const distance = enemy.pos.distance(targetPos);
 
     // Add accuracy spread
-    const spreadAmount = GameConfig.enemy.shooting.accuracy.spreadAngle *
-      (1 - GameConfig.enemy.shooting.accuracy.baseAccuracy);
+    const spreadAmount = GameConfig.enemy.base.shooting.accuracy.spreadAngle *
+      (1 - GameConfig.enemy.base.shooting.accuracy.baseAccuracy);
     const randomAngle = (Math.random() - 0.5) * spreadAmount * 2;
 
     const cos = Math.cos(randomAngle);
@@ -121,7 +121,7 @@ export class PatrolShooterBehavior implements IEnemyBehavior {
       targetPosition,
       undefined,
       true, // isEnemyProjectile
-      GameConfig.enemy.shooting.projectileSpeed
+      GameConfig.enemy.base.shooting.projectileSpeed
     );
 
     engine.add(projectile);

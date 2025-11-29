@@ -10,7 +10,7 @@ import { Player } from '@/Actors/Player';
  */
 export class StationaryShooterBehavior implements IEnemyBehavior {
   private lastShotTime: number = 0;
-  private shootCooldown: number = GameConfig.enemy.shooting.cooldown;
+  private shootCooldown: number = GameConfig.enemy.stationary.shooting.cooldown;
 
   updateMovement(enemy: Enemy, _engine: Engine, _delta: number): void {
     // Stationary - no movement
@@ -35,8 +35,8 @@ export class StationaryShooterBehavior implements IEnemyBehavior {
     const distance = enemy.pos.distance(targetPos);
     
     // Add accuracy spread
-    const spreadAmount = GameConfig.enemy.shooting.accuracy.spreadAngle * 
-                        (1 - GameConfig.enemy.shooting.accuracy.baseAccuracy);
+    const spreadAmount = GameConfig.enemy.base.shooting.accuracy.spreadAngle * 
+                        (1 - GameConfig.enemy.base.shooting.accuracy.baseAccuracy);
     const randomAngle = (Math.random() - 0.5) * spreadAmount * 2;
     
     const cos = Math.cos(randomAngle);
@@ -52,7 +52,7 @@ export class StationaryShooterBehavior implements IEnemyBehavior {
       targetPosition,
       undefined,
       true, // isEnemyProjectile
-      GameConfig.enemy.shooting.projectileSpeed
+      GameConfig.enemy.base.shooting.projectileSpeed
     );
     
     engine.add(projectile);

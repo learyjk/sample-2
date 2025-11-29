@@ -2,6 +2,7 @@
 import { Engine, Color, DisplayMode, Vector, Actor, CollisionType } from 'excalibur'
 import './style.css'
 import { Player } from '@/Actors/Player'
+import { Familiar } from '@/Actors/Familiar'
 import { GameConfig } from '@/config'
 import { Obstacle } from '@/Actors/Obstacle';
 import { EnemyFactory } from '@/Actors/enemies';
@@ -10,7 +11,7 @@ const engine = new Engine({
   width: GameConfig.width,
   height: GameConfig.height,
   backgroundColor: Color.fromHex("#1a1a1a"),
-  pixelArt: true,
+  pixelArt: false,
   pixelRatio: 2,
   displayMode: DisplayMode.FitScreen
 });
@@ -134,47 +135,62 @@ const enemyTypes = [
   'PATROL_SHOOTER',
   'CHASE_SHOOTER',
   'FAST_SHOOTER',
+  'TACTICAL_SHOOTER',
 ];
 
 // Total number of enemies to spawn
-const totalEnemies = 20;
+const totalEnemies = 25;
 
 // Spawn enemies distributed across the enemy spawn zone
-for (let i = 0; i < totalEnemies; i++) {
-  // Random position within enemy spawn zone
-  const margin = 20; // Margin from edges
-  const x = enemyZoneLeft + margin + Math.random() * (spawnZoneWidth - 2 * margin);
-  const y = enemyZoneTop + margin + Math.random() * (GameConfig.height - 2 * margin);
+// for (let i = 0; i < totalEnemies; i++) {
+//   // Random position within enemy spawn zone
+//   const margin = 20; // Margin from edges
+//   const x = enemyZoneLeft + margin + Math.random() * (spawnZoneWidth - 2 * margin);
+//   const y = enemyZoneTop + margin + Math.random() * (GameConfig.height - 2 * margin);
 
-  // Select enemy type (distribute evenly, but with some randomness)
-  let enemyType: string;
-  if (i < 5) {
-    // First 5: Stationary shooters
-    enemyType = 'STATIONARY_SHOOTER';
-  } else if (i < 10) {
-    // Next 5: Patrol shooters
-    enemyType = 'PATROL_SHOOTER';
-  } else if (i < 15) {
-    // Next 5: Chase shooters
-    enemyType = 'CHASE_SHOOTER';
-  } else {
-    // Last 5: Mix of all types (weighted random)
-    const randomIndex = Math.floor(Math.random() * enemyTypes.length);
-    enemyType = enemyTypes[randomIndex];
-  }
+//   // Select enemy type (distribute evenly, but with some randomness)
+//   let enemyType: string;
+//   if (i < 5) {
+//     // First 5: Stationary shooters
+//     enemyType = 'STATIONARY_SHOOTER';
+//   } else if (i < 10) {
+//     // Next 5: Patrol shooters
+//     enemyType = 'PATROL_SHOOTER';
+//   } else if (i < 15) {
+//     // Next 5: Chase shooters
+//     enemyType = 'CHASE_SHOOTER';
+//   } else if (i < 20) {
+//     // Next 5: Tactical shooters
+//     enemyType = 'TACTICAL_SHOOTER';
+//   } else {
+//     // Last 5: Mix of all types (weighted random)
+//     const randomIndex = Math.floor(Math.random() * enemyTypes.length);
+//     enemyType = enemyTypes[randomIndex];
+//   }
 
-  const enemy = EnemyFactory.create(enemyType, new Vector(x, y));
-  if (enemy) {
-    engine.add(enemy);
-  }
+//   const enemy = EnemyFactory.create(enemyType, new Vector(x, y));
+//   if (enemy) {
+//     engine.add(enemy);
+//   }
+// }
+
+const tacticalShooter = EnemyFactory.create(
+  'TACTICAL_SHOOTER',
+  new Vector(enemyZoneLeft + spawnZoneWidth / 2, enemyZoneTop + GameConfig.height / 2)
+);
+if (tacticalShooter) {
+  engine.add(tacticalShooter);
 }
-
 
 // Create and add player to the scene
 const player = new Player();
 // Override default position to center of spawn zone
 player.pos = new Vector(spawnZoneWidth / 2, GameConfig.height / 2);
 engine.add(player);
+
+// Create and add Familiar
+const familiar = new Familiar(player);
+engine.add(familiar);
 
 engine.start();
 

@@ -11,8 +11,8 @@ import { Pathfinding } from '../utils/Pathfinding';
  */
 export class ChaseShooterBehavior implements IEnemyBehavior {
   private lastShotTime: number = 0;
-  private shootCooldown: number = GameConfig.enemy.shooting.cooldown * 2; // Slower shooting while chasing
-  private chaseSpeed: number = GameConfig.enemy.speed * 0.8; // Slightly slower than base speed
+  private shootCooldown: number = GameConfig.enemy.chase.shooting.cooldown; // Slower shooting while chasing
+  private chaseSpeed: number = GameConfig.enemy.chase.speed; // Slightly slower than base speed
   private minDistance: number = 50; // Don't get too close
 
   updateMovement(enemy: Enemy, engine: Engine, _delta: number): void {
@@ -60,8 +60,8 @@ export class ChaseShooterBehavior implements IEnemyBehavior {
     const distance = enemy.pos.distance(targetPos);
     
     // Add accuracy spread
-    const spreadAmount = GameConfig.enemy.shooting.accuracy.spreadAngle * 
-                        (1 - GameConfig.enemy.shooting.accuracy.baseAccuracy);
+    const spreadAmount = GameConfig.enemy.base.shooting.accuracy.spreadAngle * 
+                        (1 - GameConfig.enemy.base.shooting.accuracy.baseAccuracy);
     const randomAngle = (Math.random() - 0.5) * spreadAmount * 2;
     
     const cos = Math.cos(randomAngle);
@@ -77,7 +77,7 @@ export class ChaseShooterBehavior implements IEnemyBehavior {
       targetPosition,
       undefined,
       true, // isEnemyProjectile
-      GameConfig.enemy.shooting.projectileSpeed
+      GameConfig.enemy.base.shooting.projectileSpeed
     );
     
     engine.add(projectile);

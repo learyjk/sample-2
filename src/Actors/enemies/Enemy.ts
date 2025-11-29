@@ -9,8 +9,8 @@ import type { EnemyConfig } from './EnemyConfig';
 export class Enemy extends Actor {
   private behavior: IEnemyBehavior | null = null;
   private config: EnemyConfig | null = null;
-  public health: number = GameConfig.enemy.health;
-  public maxHealth: number = GameConfig.enemy.health; // Track max health for health bar
+  public health: number = GameConfig.enemy.base.health;
+  public maxHealth: number = GameConfig.enemy.base.health; // Track max health for health bar
 
   constructor(position?: Vector, configOrBehavior?: EnemyConfig | IEnemyBehavior) {
     // Handle both old (behavior) and new (config) API for backwards compatibility
@@ -30,7 +30,7 @@ export class Enemy extends Actor {
     // Calculate radius - use config override, appearance override, or default
     const radius = config?.stats?.radius
       || config?.appearance?.radius
-      || GameConfig.width * GameConfig.enemy.radiusPercent;
+      || GameConfig.width * GameConfig.enemy.base.radiusPercent;
 
     // Use provided position or default to (0, 0)
     const pos = position || new Vector(0, 0);
@@ -167,7 +167,6 @@ export class Enemy extends Actor {
     console.log(`Enemy took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
     if (this.health <= 0) {
       this.kill();
-      console.log('Enemy died!');
     }
   }
 }
