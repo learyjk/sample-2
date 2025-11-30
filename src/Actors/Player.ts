@@ -117,7 +117,7 @@ export class Player extends Actor {
     // Allow holding Right Shift for continuous shooting, or pressing Space for single shots
     const isHoldingShift = engine.input.keyboard.isHeld(Keys.ShiftRight);
     const pressedSpace = engine.input.keyboard.wasPressed(Keys.Space);
-    
+
     if ((isHoldingShift || pressedSpace) && this.shootCooldownTimer <= 0) {
       this.shoot(engine);
       this.shootCooldownTimer = this.SHOOT_COOLDOWN;

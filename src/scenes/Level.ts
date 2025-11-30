@@ -14,17 +14,18 @@ export class Level extends Scene {
   private isLevelComplete: boolean = false;
   private isGameOver: boolean = false;
 
-  onInitialize(engine: Engine): void {
-    // Setup logic that only needs to happen once if we were reusing the scene,
-    // but we might reset everything onActivate to be safe.
+  onInitialize(_engine: Engine): void {
+    /**
+     * Scene initialization - called once when scene is created
+     * All setup happens in onActivate to ensure clean state on each level start
+     */
   }
 
-  onActivate(context: any): void {
-    const engine = context.engine;
+  onActivate(_context: any): void {
     this.activeEnemies = 0;
     this.isLevelComplete = false;
     this.isGameOver = false;
-    
+
     this.clear(); // Clear existing actors from previous runs
 
     this.setupBoundaries();
@@ -35,10 +36,11 @@ export class Level extends Scene {
   }
 
   onDeactivate(): void {
-    // If we're leaving the level scene (e.g. to Hub), 
-    // we should make sure the current player health is saved if they are alive.
-    // However, if they died, that logic handles the reset.
-    // If they won, we want to save their current health.
+    /**
+     * Save player health when leaving level scene
+     * Preserves health between levels if player survived
+     * Death handling resets health automatically
+     */
     if (this.player && !this.player.isKilled()) {
       LevelManager.getInstance().setPlayerHealth(this.player.health);
     }
@@ -46,7 +48,7 @@ export class Level extends Scene {
 
   private setupBoundaries() {
     const wallThickness = 10;
-    
+
     // Top wall
     this.add(new Obstacle(
       new Vector(GameConfig.width / 2, wallThickness / 2),
@@ -104,6 +106,10 @@ export class Level extends Scene {
     this.add(enemySpawnZone);
   }
 
+  /**
+   * Spawn obstacles randomly across the map
+   * Ensures obstacles don't spawn in player or enemy safe zones
+   */
   private spawnObstacles() {
     const obstacleCount = GameConfig.obstacle.count;
     const obstacleSize = GameConfig.obstacle.size;
@@ -115,6 +121,7 @@ export class Level extends Scene {
       let attempts = 0;
       const maxAttempts = 100;
 
+      // Try to find a valid position (not in spawn zones)
       do {
         const margin = obstacleSize;
         const x = Math.random() * (GameConfig.width - 2 * margin) + margin;
@@ -136,20 +143,25 @@ export class Level extends Scene {
     }
   }
 
+  /**
+   * Spawn player and familiar in the player safe zone
+   * Restores health from LevelManager to persist between levels
+   */
   private spawnPlayerAndFamiliar() {
     const spawnZoneWidth = GameConfig.width * GameConfig.map.spawnZoneWidthRatio;
-    
-    // Retrieve stored health from LevelManager
+
+    // Restore player health from previous level (or use default)
     const currentHealth = LevelManager.getInstance().getPlayerHealth();
 
     this.player = new Player(currentHealth);
     this.player.pos = new Vector(spawnZoneWidth / 2, GameConfig.height / 2);
-    
-    // Listen for player death
+
+    // Listen for player death event
     this.player.once('kill', () => this.onPlayerDeath());
 
     this.add(this.player);
 
+    // Spawn familiar that follows the player
     const familiar = new Familiar(this.player);
     this.add(familiar);
   }
@@ -174,26 +186,31 @@ export class Level extends Scene {
     timer.start();
   }
 
+  /**
+   * Spawn enemies based on level configuration
+   * Enemies spawn in the enemy safe zone on the right side of the map
+   */
   private spawnEnemies() {
     const currentLevel = LevelManager.getInstance().getCurrentLevel();
     const config = generateLevelConfig(currentLevel);
-    
+
     const spawnZoneWidth = GameConfig.width * GameConfig.map.spawnZoneWidthRatio;
     const enemyZoneLeft = GameConfig.width - spawnZoneWidth;
     const enemyZoneTop = 0;
 
+    // Spawn each enemy type according to level config
     Object.entries(config.enemyCounts).forEach(([typeId, count]) => {
       for (let i = 0; i < count; i++) {
         const margin = 20;
         const x = enemyZoneLeft + margin + Math.random() * (spawnZoneWidth - 2 * margin);
         const y = enemyZoneTop + margin + Math.random() * (GameConfig.height - 2 * margin);
-        
+
         const enemy = EnemyFactory.create(typeId, new Vector(x, y));
         if (enemy) {
           this.add(enemy);
           this.activeEnemies++;
-          
-          // Listen for death
+
+          // Track enemy death for level completion
           enemy.once('kill', () => this.onEnemyKilled(enemy));
         }
       }
@@ -202,10 +219,10 @@ export class Level extends Scene {
     console.log(`Level ${currentLevel} started with ${this.activeEnemies} enemies.`);
   }
 
-  private onEnemyKilled(enemy: Enemy) {
+  private onEnemyKilled(_enemy: Enemy) {
     this.activeEnemies--;
     console.log(`Enemy killed. Remaining: ${this.activeEnemies}`);
-    
+
     if (this.activeEnemies <= 0 && !this.isLevelComplete && !this.isGameOver) {
       this.levelComplete();
     }
@@ -219,7 +236,7 @@ export class Level extends Scene {
     if (this.player && !this.player.isKilled()) {
       LevelManager.getInstance().setPlayerHealth(this.player.health);
     }
-    
+
     // Add a small delay before transitioning
     const timer = new Timer({
       fcn: () => {
@@ -229,7 +246,7 @@ export class Level extends Scene {
       interval: 1000,
       repeats: false
     });
-    
+
     this.add(timer);
     timer.start();
   }
