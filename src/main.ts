@@ -8,14 +8,14 @@ import { Level } from '@/scenes/Level'
 const engine = new Engine({
   width: GameConfig.width,
   height: GameConfig.height,
-  backgroundColor: Color.fromHex("#1a1a1a"),
+  backgroundColor: Color.fromHex("#0a0a0a"), // Deep almost-black
   pixelArt: false,
   pixelRatio: 2,
   displayMode: DisplayMode.FitScreen
 });
 
-// Enable debug mode to show collider wireframes
-engine.showDebug(true);
+// Enable debug mode to show collider wireframes - DISABLED for "production" look
+// engine.showDebug(true);
 
 // Register scenes
 engine.addScene('hub', new Hub());

@@ -6,6 +6,9 @@ import { Projectile } from '@/Actors/Projectile';
 import type { IEnemyBehavior } from './EnemyBehavior';
 import type { EnemyConfig } from './EnemyConfig';
 
+const HEALTH_BAR_BG = Color.fromHex("#424242"); // Dark Grey
+const HEALTH_BAR_FG = Color.fromHex("#ef5350"); // Material Red 400
+
 export class Enemy extends Actor {
   private behavior: IEnemyBehavior | null = null;
   private config: EnemyConfig | null = null;
@@ -105,36 +108,37 @@ export class Enemy extends Actor {
       // Calculate bar dimensions based on actor size
       const actorSize = this.collider.bounds.width || this.width || 20;
       const barWidth = actorSize * 2; // Width of health bar
-      const barHeight = 3; // Height of health bar
-      const barOffsetY = -(actorSize / 2) - barHeight - 5; // Position above enemy
+      const barHeight = 4; // Height of health bar
+      const barOffsetY = -(actorSize / 2) - barHeight - 8; // Position above enemy
 
       // Calculate health percentage
       const healthPercent = Math.max(0, this.health / this.maxHealth);
 
-      // Draw background (red/dark) - full width
+      // Draw background (dark) - full width
       ctx.drawRectangle(
         new Vector(-barWidth / 2, barOffsetY),
         barWidth,
         barHeight,
-        Color.Red
+        HEALTH_BAR_BG
       );
 
-      // Draw health (green) - scaled by health percentage
+      // Draw health (red) - scaled by health percentage
       ctx.drawRectangle(
         new Vector(-barWidth / 2, barOffsetY),
         barWidth * healthPercent,
         barHeight,
-        Color.Green
+        HEALTH_BAR_FG
       );
 
       // Draw border (white outline) - draw as stroke only
-      ctx.drawRectangle(
-        new Vector(-barWidth / 2, barOffsetY),
-        barWidth,
-        barHeight,
-        Color.Transparent,
-        Color.White // stroke color
-      );
+      // Keeping it subtle, maybe remove if too noisy
+      // ctx.drawRectangle(
+      //   new Vector(-barWidth / 2, barOffsetY),
+      //   barWidth,
+      //   barHeight,
+      //   Color.Transparent,
+      //   Color.White // stroke color
+      // );
 
       ctx.restore();
     };

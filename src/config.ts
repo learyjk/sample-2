@@ -12,6 +12,9 @@ export const GameConfig = {
     speed: 300, // pixels per second
     health: 100,
     projectileSpeed: 400, // Faster than enemies
+    shooting: {
+      cooldown: 200, // milliseconds between shots when holding
+    },
     accuracy: {
       baseAccuracy: 0.95, // 95% base accuracy (0.0 to 1.0)
       spreadAngle: 0.1, // Maximum spread angle in radians (about 5.7 degrees)

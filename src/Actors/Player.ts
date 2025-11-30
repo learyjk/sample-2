@@ -5,6 +5,11 @@ import { PlayerCollisionGroupConfig } from '@/CollisionGroups';
 import { Projectile } from '@/Actors/Projectile';
 import { Enemy } from '@/Actors/enemies/Enemy';
 
+// Modern Palette for Player
+const PLAYER_COLOR = Color.fromHex("#42a5f5"); // Material Blue 400
+const HEALTH_BAR_BG = Color.fromHex("#424242"); // Dark Grey
+const HEALTH_BAR_FG = Color.fromHex("#66bb6a"); // Material Green 400
+
 export class Player extends Actor {
   private speed: number = GameConfig.player.speed;
   private facingDirection: Vector = new Vector(1, 0);
@@ -19,6 +24,10 @@ export class Player extends Actor {
   private tetherHealTimer: number = 0;
   private readonly HEAL_INTERVAL: number = GameConfig.familiar.buffs.healInterval;
 
+  // Shooting state
+  private shootCooldownTimer: number = 0;
+  private readonly SHOOT_COOLDOWN: number = GameConfig.player.shooting.cooldown;
+
   constructor(initialHealth?: number) {
     const radius = GameConfig.width * GameConfig.player.radiusPercent;
     const centerY = GameConfig.height / 2;
@@ -27,7 +36,7 @@ export class Player extends Actor {
       name: 'player',
       pos: new Vector(10, centerY),
       radius: radius,
-      color: Color.Blue,
+      color: PLAYER_COLOR,
       collisionType: CollisionType.Active,
       collisionGroup: PlayerCollisionGroupConfig,
     });
@@ -46,18 +55,18 @@ export class Player extends Actor {
       // Calculate bar dimensions based on actor size
       const actorSize = this.collider.bounds.width || this.width || 20;
       const barWidth = actorSize * 2; // Width of health bar
-      const barHeight = 3; // Height of health bar
-      const barOffsetY = -(actorSize / 2) - barHeight - 5; // Position above player
+      const barHeight = 4; // Height of health bar
+      const barOffsetY = -(actorSize / 2) - barHeight - 8; // Position above player
 
       // Calculate health percentage
       const healthPercent = Math.max(0, this.health / this.maxHealth);
 
-      // Draw background (red/dark) - full width
+      // Draw background (dark) - full width
       ctx.drawRectangle(
         new Vector(-barWidth / 2, barOffsetY),
         barWidth,
         barHeight,
-        Color.Red
+        HEALTH_BAR_BG
       );
 
       // Draw health (green) - scaled by health percentage
@@ -65,16 +74,7 @@ export class Player extends Actor {
         new Vector(-barWidth / 2, barOffsetY),
         barWidth * healthPercent,
         barHeight,
-        Color.Green
-      );
-
-      // Draw border (white outline) - draw as stroke only
-      ctx.drawRectangle(
-        new Vector(-barWidth / 2, barOffsetY),
-        barWidth,
-        barHeight,
-        Color.Transparent,
-        Color.White
+        HEALTH_BAR_FG
       );
 
       ctx.restore();
@@ -109,8 +109,18 @@ export class Player extends Actor {
 
     this.vel = new Vector(x * this.speed, y * this.speed);
 
-    if (engine.input.keyboard.wasPressed(Keys.ShiftRight) || engine.input.keyboard.wasPressed(Keys.Space)) {
+    // Update shoot cooldown timer
+    if (this.shootCooldownTimer > 0) {
+      this.shootCooldownTimer -= _delta;
+    }
+
+    // Allow holding Right Shift for continuous shooting, or pressing Space for single shots
+    const isHoldingShift = engine.input.keyboard.isHeld(Keys.ShiftRight);
+    const pressedSpace = engine.input.keyboard.wasPressed(Keys.Space);
+    
+    if ((isHoldingShift || pressedSpace) && this.shootCooldownTimer <= 0) {
       this.shoot(engine);
+      this.shootCooldownTimer = this.SHOOT_COOLDOWN;
     }
 
     // Handle Tether Buff (Regeneration)

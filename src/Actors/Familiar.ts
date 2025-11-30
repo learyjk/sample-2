@@ -3,6 +3,10 @@ import { GameConfig } from '@/config';
 import { FamiliarCollisionGroupConfig } from '@/CollisionGroups';
 import { Player } from './Player';
 
+const FAMILIAR_COLOR = Color.fromHex("#ffeb3b"); // Material Yellow 500
+const TETHER_COLOR = Color.fromHex("#ffeb3b"); // Matches familiar
+const AURA_COLOR = Color.fromHex("#ffff0020"); // Transparent Yellow
+
 export class Familiar extends Actor {
     private player: Player;
     private followDistance: number = GameConfig.familiar.followDistance;
@@ -15,23 +19,22 @@ export class Familiar extends Actor {
             name: 'Familiar',
             pos: player.pos.clone().add(new Vector(-50, -50)),
             radius: GameConfig.width * GameConfig.familiar.radiusPercent,
-            color: Color.Yellow,
-            collisionType: CollisionType.Passive, // Triggers events but doesn't physically resolve? Or Active? 
-            // Used Passive to detect overlaps if needed, but for now avoiding physics.
+            color: FAMILIAR_COLOR,
+            collisionType: CollisionType.Passive,
             collisionGroup: FamiliarCollisionGroupConfig
         });
         this.player = player;
     }
 
     // Potential future upgrade: Command ability
-    public commandToLocation(target: Vector) {
+    public commandToLocation(_target: Vector) {
         // Implementation for "Cast-like" behavior:
         // 1. Break follow mode
         // 2. Move to target
         // 3. Deploy stationary aura
     }
 
-    onInitialize(engine: Engine) {
+    onInitialize(_engine: Engine) {
         // Debug check
         if (typeof this.player.activateTetherBuff !== 'function') {
             console.error('Familiar: Player instance missing activateTetherBuff method!', this.player);
@@ -41,15 +44,15 @@ export class Familiar extends Actor {
         this.graphics.onPostDraw = (ctx) => {
             // Draw Tether if active
             if (this.isTethered) {
-                ctx.drawLine(Vector.Zero, this.player.pos.sub(this.pos), Color.Yellow, 2);
+                ctx.drawLine(Vector.Zero, this.player.pos.sub(this.pos), TETHER_COLOR, 2);
             }
 
             // Draw Aura Radius (faint)
-            ctx.drawCircle(Vector.Zero, this.tetherRadius, Color.fromHex('#FFFF0015'));
+            ctx.drawCircle(Vector.Zero, this.tetherRadius, AURA_COLOR);
         };
     }
 
-    onPreUpdate(engine: Engine, delta: number) {
+    onPreUpdate(_engine: Engine, _delta: number) {
         const distance = this.pos.distance(this.player.pos);
 
         // Follow Logic
@@ -89,4 +92,3 @@ export class Familiar extends Actor {
         }
     }
 }
-

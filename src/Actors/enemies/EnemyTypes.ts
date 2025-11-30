@@ -3,6 +3,15 @@ import type { EnemyConfig } from './EnemyConfig';
 import { StationaryShooterBehavior, PatrolShooterBehavior, ChaseShooterBehavior, HideAndShootBehavior } from './behaviors';
 import { GameConfig } from '@/config';
 
+// Modern Palette
+const PALETTE = {
+  RED: Color.fromHex("#ef5350"),    // Soft Red
+  ORANGE: Color.fromHex("#ffa726"), // Orange
+  YELLOW: Color.fromHex("#ffee58"), // Soft Yellow
+  VIOLET: Color.fromHex("#ab47bc"), // Purple
+  CYAN: Color.fromHex("#26c6da"),   // Cyan
+};
+
 /**
  * Registry of all enemy types.
  * Add new enemy types here - they automatically become available through the factory.
@@ -13,7 +22,7 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     id: 'stationary_shooter',
     name: 'Stationary Shooter',
     appearance: {
-      color: Color.Red,
+      color: PALETTE.RED,
     },
     behavior: new StationaryShooterBehavior(),
     stats: {
@@ -31,7 +40,7 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     id: 'patrol_shooter',
     name: 'Patrol Shooter',
     appearance: {
-      color: Color.Orange,
+      color: PALETTE.ORANGE,
     },
     behavior: new PatrolShooterBehavior(),
     stats: {
@@ -49,7 +58,7 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     id: 'chase_shooter',
     name: 'Chase Shooter',
     appearance: {
-      color: Color.Yellow,
+      color: PALETTE.YELLOW,
     },
     behavior: new ChaseShooterBehavior(),
     stats: {
@@ -67,7 +76,7 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     id: 'tactical_shooter',
     name: 'Tactical Shooter',
     appearance: {
-      color: Color.Violet,
+      color: PALETTE.VIOLET,
     },
     behavior: new HideAndShootBehavior(),
     stats: {
@@ -85,7 +94,7 @@ export const EnemyTypes: Record<string, EnemyConfig> = {
     id: 'fast_shooter',
     name: 'Fast Shooter',
     appearance: {
-      color: Color.Cyan,
+      color: PALETTE.CYAN,
     },
     behavior: new StationaryShooterBehavior(), // Could create a new behavior
     stats: {
@@ -113,4 +122,3 @@ export function getEnemyConfig(typeId: string): EnemyConfig | undefined {
 export function getAllEnemyTypes(): EnemyConfig[] {
   return Object.values(EnemyTypes);
 }
-
