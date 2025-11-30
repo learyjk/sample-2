@@ -19,7 +19,7 @@ export class Player extends Actor {
   private tetherHealTimer: number = 0;
   private readonly HEAL_INTERVAL: number = GameConfig.familiar.buffs.healInterval;
 
-  constructor() {
+  constructor(initialHealth?: number) {
     const radius = GameConfig.width * GameConfig.player.radiusPercent;
     const centerY = GameConfig.height / 2;
 
@@ -31,6 +31,10 @@ export class Player extends Actor {
       collisionType: CollisionType.Active,
       collisionGroup: PlayerCollisionGroupConfig,
     });
+
+    if (initialHealth !== undefined) {
+      this.health = initialHealth;
+    }
   }
 
   public onInitialize(_engine: Engine): void {
@@ -209,7 +213,7 @@ export class Player extends Actor {
       false, // isEnemyProjectile
       GameConfig.player.projectileSpeed
     );
-    
+
     projectile.on('hitEnemy', () => {
       this.hitsLanded++;
     });

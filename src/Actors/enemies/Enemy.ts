@@ -163,6 +163,7 @@ export class Enemy extends Actor {
   }
 
   public takeDamage(amount: number): void {
+    if (this.health <= 0) return;
     this.health -= amount;
     console.log(`Enemy took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
     if (this.health <= 0) {

@@ -45,7 +45,7 @@ export class Familiar extends Actor {
             }
 
             // Draw Aura Radius (faint)
-            ctx.drawCircle(Vector.Zero, this.tetherRadius, Color.fromHex('#33FFFF00'));
+            ctx.drawCircle(Vector.Zero, this.tetherRadius, Color.fromHex('#FFFF0015'));
         };
     }
 

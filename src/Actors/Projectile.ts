@@ -12,7 +12,7 @@ export class Projectile extends Actor {
 
     constructor(startPosition: Vector, targetPosition: Vector, collisionGroup?: CollisionGroup, isEnemyProjectile: boolean = false, speed?: number, damage?: number) {
         // Calculate projectile radius as a small percentage of game width
-        const radius = GameConfig.width * 0.001;
+        const radius = GameConfig.width * 0.0025;
 
         super({
             pos: startPosition.clone(),
