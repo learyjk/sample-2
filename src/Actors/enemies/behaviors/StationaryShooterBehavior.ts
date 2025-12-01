@@ -4,6 +4,7 @@ import { Enemy } from '../Enemy';
 import { Projectile } from '@/Actors/Projectile';
 import { GameConfig } from '@/config';
 import { Player } from '@/Actors/Player';
+import { ParticleSystem } from '@/utils/ParticleSystem';
 
 /**
  * A simple behavior: enemy stays in place and shoots at the player periodically
@@ -47,6 +48,10 @@ export class StationaryShooterBehavior implements IEnemyBehavior {
     );
 
     const targetPosition = enemy.pos.add(spreadDirection.scale(distance));
+    
+    // Create muzzle flash for enemy
+    ParticleSystem.createMuzzleFlash(engine, enemy.pos.clone(), spreadDirection);
+    
     const projectile = new Projectile(
       enemy.pos.clone(),
       targetPosition,

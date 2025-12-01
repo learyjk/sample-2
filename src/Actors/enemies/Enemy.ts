@@ -5,6 +5,7 @@ import { EnemyCollisionGroupConfig } from '@/CollisionGroups';
 import { Projectile } from '@/Actors/Projectile';
 import type { IEnemyBehavior } from './EnemyBehavior';
 import type { EnemyConfig } from './EnemyConfig';
+import { ParticleSystem } from '@/utils/ParticleSystem';
 
 const HEALTH_BAR_BG = Color.fromHex("#424242"); // Dark Grey
 const HEALTH_BAR_FG = Color.fromHex("#ef5350"); // Material Red 400
@@ -171,6 +172,11 @@ export class Enemy extends Actor {
     this.health -= amount;
     console.log(`Enemy took ${amount} damage. Health: ${this.health}/${this.maxHealth}`);
     if (this.health <= 0) {
+      // Create death particles before killing
+      if (this.scene && this.scene.engine) {
+        const deathColor = this.config?.appearance?.color || Color.Red;
+        ParticleSystem.createDeathEffect(this.scene.engine, this.pos.clone(), deathColor);
+      }
       this.kill();
     }
   }

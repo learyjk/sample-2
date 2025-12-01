@@ -7,12 +7,15 @@ import { EnemyFactory } from '@/Actors/enemies';
 import { LevelManager } from '@/LevelManager';
 import { generateLevelConfig } from '@/LevelConfig';
 import { Enemy } from '@/Actors/enemies/Enemy';
+import { ScreenShake } from '@/utils/ScreenShake';
 
 export class Level extends Scene {
   private player: Player | null = null;
   private activeEnemies: number = 0;
   private isLevelComplete: boolean = false;
   private isGameOver: boolean = false;
+  private screenShake: ScreenShake = new ScreenShake();
+  private cameraOffset: Vector = Vector.Zero;
 
   onInitialize(_engine: Engine): void {
     /**
@@ -25,6 +28,8 @@ export class Level extends Scene {
     this.activeEnemies = 0;
     this.isLevelComplete = false;
     this.isGameOver = false;
+    this.screenShake.reset();
+    this.cameraOffset = Vector.Zero;
 
     this.clear(); // Clear existing actors from previous runs
 
@@ -33,6 +38,18 @@ export class Level extends Scene {
     this.spawnObstacles();
     this.spawnPlayerAndFamiliar();
     this.spawnEnemies();
+  }
+
+  onPreUpdate(_engine: Engine, delta: number): void {
+    // Update screen shake
+    const newShakeOffset = this.screenShake.update(delta);
+
+    // Apply camera offset (relative to previous offset)
+    if (this.camera) {
+      const offsetDelta = newShakeOffset.sub(this.cameraOffset);
+      this.camera.pos = this.camera.pos.add(offsetDelta);
+      this.cameraOffset = newShakeOffset;
+    }
   }
 
   onDeactivate(): void {
@@ -223,9 +240,19 @@ export class Level extends Scene {
     this.activeEnemies--;
     console.log(`Enemy killed. Remaining: ${this.activeEnemies}`);
 
+    // Add screen shake for enemy death
+    this.screenShake.shake(0.3);
+
     if (this.activeEnemies <= 0 && !this.isLevelComplete && !this.isGameOver) {
       this.levelComplete();
     }
+  }
+
+  /**
+   * Get screen shake instance for other actors to trigger
+   */
+  public getScreenShake(): ScreenShake {
+    return this.screenShake;
   }
 
   private levelComplete() {

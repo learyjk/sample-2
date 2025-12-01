@@ -5,6 +5,7 @@ import { Projectile } from '@/Actors/Projectile';
 import { GameConfig } from '@/config';
 import { Player } from '@/Actors/Player';
 import { Pathfinding } from '../utils/Pathfinding';
+import { ParticleSystem } from '@/utils/ParticleSystem';
 
 /**
  * Enemy chases the player while shooting at them
@@ -72,6 +73,10 @@ export class ChaseShooterBehavior implements IEnemyBehavior {
     );
 
     const targetPosition = enemy.pos.add(spreadDirection.scale(distance));
+    
+    // Create muzzle flash for enemy
+    ParticleSystem.createMuzzleFlash(engine, enemy.pos.clone(), spreadDirection);
+    
     const projectile = new Projectile(
       enemy.pos.clone(),
       targetPosition,

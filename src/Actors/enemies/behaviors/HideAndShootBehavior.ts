@@ -7,6 +7,7 @@ import { GameConfig } from '@/config';
 import { Projectile } from '@/Actors/Projectile';
 import { Pathfinding } from '../utils/Pathfinding';
 import { ObstacleAvoidance } from '../utils/ObstacleAvoidance';
+import { ParticleSystem } from '@/utils/ParticleSystem';
 
 export class HideAndShootBehavior implements IEnemyBehavior {
     private currentObstacle: Obstacle | null = null;
@@ -203,6 +204,11 @@ export class HideAndShootBehavior implements IEnemyBehavior {
     }
 
     private shootAtTarget(enemy: Enemy, engine: Engine, targetPos: Vector): void {
+        const direction = targetPos.sub(enemy.pos).normalize();
+
+        // Create muzzle flash for enemy
+        ParticleSystem.createMuzzleFlash(engine, enemy.pos.clone(), direction);
+
         const projectile = new Projectile(
             enemy.pos.clone(),
             targetPos,

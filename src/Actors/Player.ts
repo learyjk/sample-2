@@ -4,8 +4,9 @@ import { GameConfig } from '@/config';
 import { PlayerCollisionGroupConfig } from '@/CollisionGroups';
 import { Projectile } from '@/Actors/Projectile';
 import { Enemy } from '@/Actors/enemies/Enemy';
+import { ParticleSystem } from '@/utils/ParticleSystem';
 
-// Modern Palette for Player
+// Player visual constants using Material Design color palette
 const PLAYER_COLOR = Color.fromHex("#42a5f5"); // Material Blue 400
 const HEALTH_BAR_BG = Color.fromHex("#424242"); // Dark Grey
 const HEALTH_BAR_FG = Color.fromHex("#66bb6a"); // Material Green 400
@@ -28,6 +29,10 @@ export class Player extends Actor {
   private shootCooldownTimer: number = 0;
   private readonly SHOOT_COOLDOWN: number = GameConfig.player.shooting.cooldown;
 
+  // Visual feedback state
+  private hitFlashTimer: number = 0;
+  private readonly HIT_FLASH_DURATION: number = 100; // ms
+
   constructor(initialHealth?: number) {
     const radius = GameConfig.width * GameConfig.player.radiusPercent;
     const centerY = GameConfig.height / 2;
@@ -47,21 +52,33 @@ export class Player extends Actor {
   }
 
   public onInitialize(_engine: Engine): void {
-    // Setup health bar drawing using graphics.onPostDraw
+    /**
+     * Set up health bar visualization above the player
+     * Uses graphics.onPostDraw to render UI elements relative to the actor
+     */
     this.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
       ctx.save();
 
-      // Draw health bar above player
-      // Calculate bar dimensions based on actor size
-      const actorSize = this.collider.bounds.width || this.width || 20;
-      const barWidth = actorSize * 2; // Width of health bar
-      const barHeight = 4; // Height of health bar
-      const barOffsetY = -(actorSize / 2) - barHeight - 8; // Position above player
+      // Hit flash effect - red tint when taking damage
+      if (this.hitFlashTimer > 0) {
+        const flashIntensity = this.hitFlashTimer / this.HIT_FLASH_DURATION;
+        const flashColor = Color.fromHex("#ff0000"); // Red flash
+        const actorSize = this.collider.bounds.width || this.width || 20;
+        ctx.opacity = flashIntensity * 0.5; // Fade from 50% to 0%
+        ctx.drawCircle(Vector.Zero, actorSize * 1.5, flashColor);
+        ctx.opacity = 1; // Reset opacity
+      }
 
-      // Calculate health percentage
+      // Calculate health bar dimensions based on actor size
+      const actorSize = this.collider.bounds.width || this.width || 20;
+      const barWidth = actorSize * 2;
+      const barHeight = 4;
+      const barOffsetY = -(actorSize / 2) - barHeight - 8;
+
+      // Calculate health percentage (clamped to 0-1)
       const healthPercent = Math.max(0, this.health / this.maxHealth);
 
-      // Draw background (dark) - full width
+      // Draw background bar (full width, dark)
       ctx.drawRectangle(
         new Vector(-barWidth / 2, barOffsetY),
         barWidth,
@@ -69,7 +86,7 @@ export class Player extends Actor {
         HEALTH_BAR_BG
       );
 
-      // Draw health (green) - scaled by health percentage
+      // Draw health bar (scaled by health percentage, green)
       ctx.drawRectangle(
         new Vector(-barWidth / 2, barOffsetY),
         barWidth * healthPercent,
@@ -81,6 +98,10 @@ export class Player extends Actor {
     };
   }
 
+  /**
+   * Handle player movement input (WASD or Arrow Keys)
+   * Normalize diagonal movement to prevent faster diagonal speed
+   */
   public onPreUpdate(engine: Engine, _delta: number): void {
     let x = 0;
     let y = 0;
@@ -98,6 +119,7 @@ export class Player extends Actor {
       x = 1;
     }
 
+    // Normalize diagonal movement
     if (x !== 0 || y !== 0) {
       if (x !== 0 && y !== 0) {
         const magnitude = Math.sqrt(x * x + y * y);
@@ -107,14 +129,16 @@ export class Player extends Actor {
       this.facingDirection = new Vector(x, y).normalize();
     }
 
+    // Apply velocity based on input
     this.vel = new Vector(x * this.speed, y * this.speed);
 
-    // Update shoot cooldown timer
+    // Handle shooting with cooldown system
+    // Right Shift: Hold for continuous shooting
+    // Space: Press for single shots
     if (this.shootCooldownTimer > 0) {
       this.shootCooldownTimer -= _delta;
     }
 
-    // Allow holding Right Shift for continuous shooting, or pressing Space for single shots
     const isHoldingShift = engine.input.keyboard.isHeld(Keys.ShiftRight);
     const pressedSpace = engine.input.keyboard.wasPressed(Keys.Space);
 
@@ -123,14 +147,19 @@ export class Player extends Actor {
       this.shootCooldownTimer = this.SHOOT_COOLDOWN;
     }
 
-    // Handle Tether Buff (Regeneration)
+    // Handle tether buff regeneration
+    // When tethered to familiar, player regenerates health over time
     if (this.tetherBuffActive && this.health < this.maxHealth) {
       this.tetherHealTimer += _delta;
       if (this.tetherHealTimer >= this.HEAL_INTERVAL) {
         this.health = Math.min(this.health + GameConfig.familiar.buffs.healAmount, this.maxHealth);
         this.tetherHealTimer = 0;
-        // Visual feedback could be added here
       }
+    }
+
+    // Update hit flash timer
+    if (this.hitFlashTimer > 0) {
+      this.hitFlashTimer -= _delta;
     }
   }
 
@@ -148,8 +177,11 @@ export class Player extends Actor {
     }
   }
 
+  /**
+   * Apply damage to the player
+   * Tether buff reduces incoming damage by 20%
+   */
   public takeDamage(amount: number): void {
-    // Apply damage reduction if tether is active
     let actualDamage = amount;
     if (this.tetherBuffActive) {
       actualDamage = Math.ceil(amount * GameConfig.familiar.buffs.damageReduction);
@@ -158,21 +190,37 @@ export class Player extends Actor {
 
     this.health -= actualDamage;
     console.log(`Player took ${actualDamage} damage. Health: ${this.health}/${this.maxHealth}`);
+
+    // Trigger hit flash effect
+    this.hitFlashTimer = this.HIT_FLASH_DURATION;
+
+    // Trigger screen shake if available
+    if (this.scene) {
+      const levelScene = this.scene as any;
+      if (levelScene.getScreenShake) {
+        levelScene.getScreenShake().shake(0.2);
+      }
+    }
+
     if (this.health <= 0) {
       this.kill();
       console.log('Player died!');
     }
   }
 
+  /**
+   * Fire a projectile
+   * Auto-aims at nearest enemy with accuracy spread, or shoots forward if no enemies
+   */
   private shoot(engine: Engine): void {
     this.shotsFired++;
 
-    // Find all enemies
+    // Find all enemies in the current scene
     const enemies = engine.currentScene.actors.filter(actor => {
       return actor instanceof Enemy;
     }) as Enemy[];
 
-    // Find the nearest enemy
+    // Find the nearest enemy for auto-aiming
     let nearestEnemy: Enemy | undefined;
     let minDistance = Infinity;
 
@@ -187,10 +235,12 @@ export class Player extends Actor {
     let targetPosition: Vector;
 
     if (nearestEnemy) {
+      // Auto-aim at nearest enemy with accuracy spread
       const baseDirection = nearestEnemy.pos.sub(this.pos).normalize();
       const spreadAmount = GameConfig.player.accuracy.spreadAngle * (1 - GameConfig.player.accuracy.baseAccuracy);
       const randomAngle = (Math.random() - 0.5) * spreadAmount * 2;
 
+      // Apply rotation matrix for spread
       const cos = Math.cos(randomAngle);
       const sin = Math.sin(randomAngle);
       const spreadDirection = new Vector(
@@ -201,7 +251,7 @@ export class Player extends Actor {
       const distanceToEnemy = this.pos.distance(nearestEnemy.pos);
       targetPosition = this.pos.add(spreadDirection.scale(distanceToEnemy));
     } else {
-      // No enemies, shoot forward based on facing direction
+      // No enemies found, shoot forward based on facing direction
       const shootDistance = 100;
       const spreadAmount = GameConfig.player.accuracy.spreadAngle * (1 - GameConfig.player.accuracy.baseAccuracy);
       const randomAngle = (Math.random() - 0.5) * spreadAmount * 2;
@@ -216,6 +266,13 @@ export class Player extends Actor {
       targetPosition = this.pos.add(spreadDirection.scale(shootDistance));
     }
 
+    // Calculate shot direction for muzzle flash
+    const shotDirection = targetPosition.sub(this.pos).normalize();
+
+    // Create muzzle flash effect
+    ParticleSystem.createMuzzleFlash(engine, this.pos.clone(), shotDirection);
+
+    // Create and fire projectile
     const projectile = new Projectile(
       this.pos.clone(),
       targetPosition,
@@ -224,6 +281,7 @@ export class Player extends Actor {
       GameConfig.player.projectileSpeed
     );
 
+    // Track accuracy statistics
     projectile.on('hitEnemy', () => {
       this.hitsLanded++;
     });
@@ -231,6 +289,10 @@ export class Player extends Actor {
     engine.add(projectile);
   }
 
+  /**
+   * Calculate player accuracy percentage
+   * Returns 100% if no shots have been fired
+   */
   public getAccuracy(): number {
     if (this.shotsFired === 0) {
       return 100;
@@ -238,6 +300,9 @@ export class Player extends Actor {
     return (this.hitsLanded / this.shotsFired) * 100;
   }
 
+  /**
+   * Get comprehensive accuracy statistics
+   */
   public getAccuracyStats(): { shotsFired: number; hitsLanded: number; accuracy: number } {
     return {
       shotsFired: this.shotsFired,
@@ -246,6 +311,9 @@ export class Player extends Actor {
     };
   }
 
+  /**
+   * Reset accuracy tracking (useful when starting a new level)
+   */
   public resetAccuracy(): void {
     this.shotsFired = 0;
     this.hitsLanded = 0;
