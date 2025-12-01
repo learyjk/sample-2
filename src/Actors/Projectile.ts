@@ -11,7 +11,7 @@ export class Projectile extends Actor {
     public isEnemyProjectile: boolean = false; // Track if this is an enemy projectile
     public damage: number = GameConfig.projectile.damage;
     private trailTimer: number = 0;
-    private readonly TRAIL_INTERVAL: number = 30; // Create trail particle every 30ms
+    private readonly TRAIL_INTERVAL: number = 60; // Create trail particle every 60ms
 
     constructor(startPosition: Vector, targetPosition: Vector, collisionGroup?: CollisionGroup, isEnemyProjectile: boolean = false, speed?: number, damage?: number) {
         // Calculate projectile radius as a small percentage of game width

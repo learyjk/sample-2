@@ -8,6 +8,7 @@ import { LevelManager } from '@/LevelManager';
 import { generateLevelConfig } from '@/LevelConfig';
 import { Enemy } from '@/Actors/enemies/Enemy';
 import { ScreenShake } from '@/utils/ScreenShake';
+import { ParticleSystem } from '@/utils/ParticleSystem';
 
 export class Level extends Scene {
   private player: Player | null = null;
@@ -30,6 +31,9 @@ export class Level extends Scene {
     this.isGameOver = false;
     this.screenShake.reset();
     this.cameraOffset = Vector.Zero;
+
+    // Reset particle system tracking since we are clearing the scene
+    ParticleSystem.reset();
 
     this.clear(); // Clear existing actors from previous runs
 
