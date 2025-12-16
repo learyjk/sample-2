@@ -1,13 +1,33 @@
+/* Import arcade-style fonts */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
+
 :root {
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Arcade color palette - neon on dark */
+  --arcade-bg: #0a0a12;
+  --arcade-primary: #ff00ff;
+  /* Hot magenta */
+  --arcade-secondary: #00ffff;
+  /* Cyan */
+  --arcade-accent: #ffff00;
+  /* Yellow */
+  --arcade-danger: #ff3366;
+  /* Hot pink/red */
+  --arcade-success: #00ff88;
+  /* Neon green */
+  --arcade-text: #ffffff;
+  --arcade-text-dim: #8888aa;
+
+  /* Glow effects */
+  --glow-primary: 0 0 10px var(--arcade-primary), 0 0 20px var(--arcade-primary), 0 0 40px var(--arcade-primary);
+  --glow-secondary: 0 0 10px var(--arcade-secondary), 0 0 20px var(--arcade-secondary), 0 0 40px var(--arcade-secondary);
+  --glow-accent: 0 0 10px var(--arcade-accent), 0 0 20px var(--arcade-accent);
+
+  font-family: 'Orbitron', 'Courier New', monospace;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: dark;
-  color: #e0e0e0;
-  background-color: #121212;
-  /* Darker background */
-
+  color: var(--arcade-text);
+  background-color: var(--arcade-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,55 +36,328 @@
 
 html,
 body {
-  background-color: #050505;
-  /* Deep black/gray */
+  background-color: var(--arcade-bg);
   margin: 0;
   padding: 0;
   height: 100%;
   overflow: hidden;
-  /* Prevent scrollbars */
+  position: relative;
+}
+
+/* Scanline overlay effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* CRT vignette effect */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center,
+      transparent 0%,
+      transparent 60%,
+      rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 9998;
 }
 
 body {
   display: flex;
   justify-content: center;
   align-items: center;
+  /* Animated grid background */
+  background-image:
+    linear-gradient(rgba(255, 0, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridScroll 20s linear infinite;
+}
+
+@keyframes gridScroll {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 40px 40px;
+  }
 }
 
 #app {
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-  /* Shadow for game container */
+  position: relative;
+  /* Neon glow border */
+  box-shadow:
+    0 0 20px rgba(255, 0, 255, 0.5),
+    0 0 40px rgba(255, 0, 255, 0.3),
+    0 0 60px rgba(255, 0, 255, 0.1),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--arcade-primary);
+  border-radius: 4px;
 }
 
+/* Arcade-style buttons */
 button {
-  border-radius: 4px;
-  border: 1px solid #333;
-  padding: 0.8em 1.6em;
-  font-size: 1.1em;
+  font-family: 'Press Start 2P', 'Orbitron', monospace;
+  border-radius: 0;
+  border: 3px solid var(--arcade-secondary);
+  padding: 1em 2em;
+  font-size: 0.9em;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-family: inherit;
-  background-color: #2a2a2a;
-  color: #fff;
+  letter-spacing: 0.1em;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0a0a12 100%);
+  color: var(--arcade-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.1s ease;
+  box-shadow:
+    var(--glow-secondary),
+    inset 0 0 20px rgba(0, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(0, 255, 255, 0.2),
+      transparent);
+  transition: left 0.3s ease;
 }
 
 button:hover {
-  background-color: #3a3a3a;
-  border-color: #646cff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(180deg, #2a2a4e 0%, #1a1a2e 100%);
+  border-color: var(--arcade-primary);
+  color: var(--arcade-primary);
+  box-shadow: var(--glow-primary);
+  transform: scale(1.02);
+}
+
+button:hover::before {
+  left: 100%;
 }
 
 button:active {
-  transform: translateY(0);
+  transform: scale(0.98);
+  box-shadow:
+    0 0 5px var(--arcade-primary),
+    0 0 10px var(--arcade-primary);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 2px solid #646cff;
-  outline-offset: 2px;
+  outline: 2px solid var(--arcade-accent);
+  outline-offset: 4px;
+}
+
+/* Flicker animation for neon effect */
+@keyframes flicker {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
+
+  52% {
+    opacity: 1;
+  }
+
+  54% {
+    opacity: 0.9;
+  }
+
+  56% {
+    opacity: 1;
+  }
+}
+
+/* Pulse animation for glowing elements */
+@keyframes pulse {
+
+  0%,
+  100% {
+    box-shadow: var(--glow-primary);
+  }
+
+  50% {
+    box-shadow:
+      0 0 15px var(--arcade-primary),
+      0 0 30px var(--arcade-primary),
+      0 0 60px var(--arcade-primary);
+  }
+}
+
+/* Text glow animation */
+@keyframes textGlow {
+
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px currentColor,
+      0 0 20px currentColor;
+  }
+
+  50% {
+    text-shadow:
+      0 0 15px currentColor,
+      0 0 30px currentColor,
+      0 0 45px currentColor;
+  }
+}
+
+/* Arcade title styling class */
+.arcade-title {
+  font-family: 'Press Start 2P', monospace;
+  color: var(--arcade-primary);
+  text-shadow:
+    0 0 10px var(--arcade-primary),
+    0 0 20px var(--arcade-primary),
+    0 0 40px var(--arcade-primary),
+    4px 4px 0 var(--arcade-secondary);
+  animation: textGlow 2s ease-in-out infinite;
+}
+
+/* Arcade subtitle styling */
+.arcade-subtitle {
+  font-family: 'Orbitron', monospace;
+  color: var(--arcade-secondary);
+  text-shadow:
+    0 0 5px var(--arcade-secondary),
+    0 0 10px var(--arcade-secondary);
+  letter-spacing: 0.2em;
+}
+
+/* High score / stats styling */
+.arcade-stats {
+  font-family: 'Press Start 2P', monospace;
+  color: var(--arcade-accent);
+  text-shadow: 0 0 10px var(--arcade-accent);
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
+}
+
+/* Insert coin blinking text */
+.arcade-blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Game over / victory screen overlay */
+.arcade-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.arcade-overlay h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 2em;
+  margin-bottom: 1em;
+}
+
+.arcade-overlay.game-over h1 {
+  color: var(--arcade-danger);
+  text-shadow:
+    0 0 10px var(--arcade-danger),
+    0 0 20px var(--arcade-danger),
+    0 0 40px var(--arcade-danger);
+}
+
+.arcade-overlay.victory h1 {
+  color: var(--arcade-success);
+  text-shadow:
+    0 0 10px var(--arcade-success),
+    0 0 20px var(--arcade-success),
+    0 0 40px var(--arcade-success);
+  animation: textGlow 1s ease-in-out infinite;
+}
+
+/* HUD styling */
+.arcade-hud {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--arcade-text);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.arcade-hud-panel {
+  background: linear-gradient(180deg, rgba(20, 20, 40, 0.9) 0%, rgba(10, 10, 20, 0.95) 100%);
+  border: 2px solid var(--arcade-secondary);
+  box-shadow:
+    0 0 10px rgba(0, 255, 255, 0.3),
+    inset 0 0 10px rgba(0, 0, 0, 0.5);
+  padding: 8px 12px;
+}
+
+/* Health bar arcade styling */
+.health-bar-container {
+  background: #111;
+  border: 2px solid var(--arcade-danger);
+  box-shadow: 0 0 10px rgba(255, 51, 102, 0.3);
+}
+
+.health-bar-fill {
+  background: linear-gradient(90deg, var(--arcade-danger) 0%, var(--arcade-success) 100%);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Level indicator */
+.level-indicator {
+  font-family: 'Press Start 2P', monospace;
+  color: var(--arcade-accent);
+  text-shadow:
+    0 0 5px var(--arcade-accent),
+    2px 2px 0 #000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 850px) {
+  button {
+    font-size: 0.7em;
+    padding: 0.8em 1.5em;
+  }
 }

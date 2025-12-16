@@ -29,8 +29,6 @@ export const GameConfig = {
     tetherRadius: 100, // Radius for tether buff activation
     buffs: {
       damageReduction: 0.8, // 20% reduction (multiplier)
-      healInterval: 1000, // ms
-      healAmount: 1, // health per interval
     }
   },
 

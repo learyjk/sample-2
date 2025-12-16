@@ -1,4 +1,5 @@
-import { Scene, Engine, Vector, Color, Actor, CollisionType, Timer } from 'excalibur';
+import { Scene, Engine, Vector, Color, Actor, CollisionType, Timer, Label, Font, FontUnit } from 'excalibur';
+import type { ExcaliburGraphicsContext } from 'excalibur';
 import { GameConfig } from '@/config';
 import { Player } from '@/Actors/Player';
 import { Familiar } from '@/Actors/Familiar';
@@ -9,6 +10,14 @@ import { generateLevelConfig } from '@/LevelConfig';
 import { Enemy } from '@/Actors/enemies/Enemy';
 import { ScreenShake } from '@/utils/ScreenShake';
 import { ParticleSystem } from '@/utils/ParticleSystem';
+import { BuffHUD } from '@/UI/BuffHUD';
+
+// Arcade color palette
+const ARCADE_MAGENTA = Color.fromHex("#ff00ff");
+const ARCADE_CYAN = Color.fromHex("#00ffff");
+const ARCADE_YELLOW = Color.fromHex("#ffff00");
+const ARCADE_DANGER = Color.fromHex("#ff3366");
+const ARCADE_SUCCESS = Color.fromHex("#00ff88");
 
 export class Level extends Scene {
   private player: Player | null = null;
@@ -17,6 +26,9 @@ export class Level extends Scene {
   private isGameOver: boolean = false;
   private screenShake: ScreenShake = new ScreenShake();
   private cameraOffset: Vector = Vector.Zero;
+  private buffHUD: BuffHUD = new BuffHUD();
+  private levelIndicator: Actor | null = null;
+  private enemyCounter: Actor | null = null;
 
   onInitialize(_engine: Engine): void {
     /**
@@ -42,6 +54,8 @@ export class Level extends Scene {
     this.spawnObstacles();
     this.spawnPlayerAndFamiliar();
     this.spawnEnemies();
+    this.setupHUD();
+    this.setupArcadeUI();
   }
 
   onPreUpdate(_engine: Engine, delta: number): void {
@@ -102,28 +116,28 @@ export class Level extends Scene {
   private setupSpawnZones() {
     const spawnZoneWidth = GameConfig.width * GameConfig.map.spawnZoneWidthRatio;
 
-    // Visual: Player Safe Zone
+    // Visual: Player Safe Zone with arcade styling
     const playerSpawnZone = new Actor({
       pos: new Vector(spawnZoneWidth / 2, GameConfig.height / 2),
       width: spawnZoneWidth,
       height: GameConfig.height,
-      color: Color.Blue.clone(),
+      color: ARCADE_CYAN.clone(),
       collisionType: CollisionType.PreventCollision,
       z: -1
     });
-    playerSpawnZone.graphics.opacity = 0.2;
+    playerSpawnZone.graphics.opacity = 0.08;
     this.add(playerSpawnZone);
 
-    // Visual: Enemy Safe Zone
+    // Visual: Enemy Safe Zone with arcade styling
     const enemySpawnZone = new Actor({
       pos: new Vector(GameConfig.width - (spawnZoneWidth / 2), GameConfig.height / 2),
       width: spawnZoneWidth,
       height: GameConfig.height,
-      color: Color.Red.clone(),
+      color: ARCADE_MAGENTA.clone(),
       collisionType: CollisionType.PreventCollision,
       z: -1
     });
-    enemySpawnZone.graphics.opacity = 0.2;
+    enemySpawnZone.graphics.opacity = 0.08;
     this.add(enemySpawnZone);
   }
 
@@ -192,6 +206,9 @@ export class Level extends Scene {
     this.isGameOver = true;
     console.log("Game Over!");
 
+    // Show arcade-style game over overlay
+    this.showGameOverOverlay();
+
     // Reset Level Logic
     LevelManager.getInstance().resetLevel(); // Resets level count AND health
 
@@ -200,7 +217,7 @@ export class Level extends Scene {
       fcn: () => {
         this.engine.goToScene('hub');
       },
-      interval: 1500,
+      interval: 2500,
       repeats: false
     });
     this.add(timer);
@@ -259,9 +276,257 @@ export class Level extends Scene {
     return this.screenShake;
   }
 
+  /**
+   * Setup HUD for displaying buffs and effects
+   */
+  private setupHUD(): void {
+    if (this.player) {
+      this.buffHUD.setPlayer(this.player);
+    }
+    this.add(this.buffHUD);
+  }
+
+  /**
+   * Setup arcade-style UI elements (level indicator, enemy counter)
+   */
+  private setupArcadeUI(): void {
+    const currentLevel = LevelManager.getInstance().getCurrentLevel();
+
+    // Level indicator in top-right
+    this.levelIndicator = new Actor({
+      pos: new Vector(GameConfig.width - 20, 20),
+      width: 150,
+      height: 30,
+      color: Color.Transparent,
+      collisionType: CollisionType.PreventCollision,
+      z: 1000
+    });
+
+    this.levelIndicator.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
+      // Background panel
+      ctx.drawRectangle(
+        new Vector(-130, -12),
+        130,
+        28,
+        Color.fromHex("#0a0a1280")
+      );
+
+      // Border
+      ctx.drawLine(
+        new Vector(-130, -12),
+        new Vector(0, -12),
+        ARCADE_CYAN,
+        1
+      );
+      ctx.drawLine(
+        new Vector(-130, 16),
+        new Vector(0, 16),
+        ARCADE_CYAN,
+        1
+      );
+    };
+
+    this.add(this.levelIndicator);
+
+    // Level label
+    const levelLabel = new Label({
+      text: `STAGE ${currentLevel}`,
+      pos: new Vector(GameConfig.width - 75, 20),
+      font: new Font({
+        size: 12,
+        unit: FontUnit.Px,
+        color: ARCADE_YELLOW,
+        family: '"Press Start 2P", monospace',
+        shadow: {
+          blur: 6,
+          offset: new Vector(0, 0),
+          color: ARCADE_YELLOW
+        }
+      })
+    });
+    levelLabel.anchor.setTo(0.5, 0.5);
+    this.add(levelLabel);
+
+    // Enemy counter
+    this.enemyCounter = new Actor({
+      pos: new Vector(GameConfig.width - 20, 55),
+      width: 150,
+      height: 25,
+      color: Color.Transparent,
+      collisionType: CollisionType.PreventCollision,
+      z: 1000
+    });
+
+    const self = this;
+    this.enemyCounter.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
+      // Background
+      ctx.drawRectangle(
+        new Vector(-130, -10),
+        130,
+        22,
+        Color.fromHex("#0a0a1280")
+      );
+    };
+
+    this.add(this.enemyCounter);
+
+    // Enemy count label (will update dynamically)
+    const enemyLabel = new Label({
+      text: `ENEMIES: ${this.activeEnemies}`,
+      pos: new Vector(GameConfig.width - 75, 55),
+      font: new Font({
+        size: 8,
+        unit: FontUnit.Px,
+        color: ARCADE_MAGENTA,
+        family: '"Press Start 2P", monospace',
+        shadow: {
+          blur: 4,
+          offset: new Vector(0, 0),
+          color: ARCADE_MAGENTA
+        }
+      })
+    });
+    enemyLabel.anchor.setTo(0.5, 0.5);
+    
+    // Update enemy count on pre-update
+    enemyLabel.onPreUpdate = () => {
+      enemyLabel.text = `ENEMIES: ${self.activeEnemies}`;
+    };
+    
+    this.add(enemyLabel);
+  }
+
+  /**
+   * Show arcade-style game over overlay
+   */
+  private showGameOverOverlay(): void {
+    // Dark overlay
+    const overlay = new Actor({
+      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2),
+      width: GameConfig.width,
+      height: GameConfig.height,
+      color: Color.fromHex("#000000"),
+      collisionType: CollisionType.PreventCollision,
+      z: 2000
+    });
+    overlay.graphics.opacity = 0.85;
+    this.add(overlay);
+
+    // GAME OVER text
+    const gameOverLabel = new Label({
+      text: 'GAME OVER',
+      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 - 40),
+      font: new Font({
+        size: 36,
+        unit: FontUnit.Px,
+        color: ARCADE_DANGER,
+        family: '"Press Start 2P", monospace',
+        shadow: {
+          blur: 20,
+          offset: new Vector(0, 0),
+          color: ARCADE_DANGER
+        }
+      })
+    });
+    gameOverLabel.anchor.setTo(0.5, 0.5);
+    gameOverLabel.z = 2001;
+    this.add(gameOverLabel);
+
+    // Subtext
+    const subLabel = new Label({
+      text: 'RETURNING TO HUB...',
+      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 + 30),
+      font: new Font({
+        size: 10,
+        unit: FontUnit.Px,
+        color: Color.fromHex("#8888aa"),
+        family: '"Press Start 2P", monospace'
+      })
+    });
+    subLabel.anchor.setTo(0.5, 0.5);
+    subLabel.z = 2001;
+    this.add(subLabel);
+  }
+
+  /**
+   * Show arcade-style level complete overlay
+   */
+  private showLevelCompleteOverlay(): void {
+    // Dark overlay
+    const overlay = new Actor({
+      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2),
+      width: GameConfig.width,
+      height: GameConfig.height,
+      color: Color.fromHex("#000000"),
+      collisionType: CollisionType.PreventCollision,
+      z: 2000
+    });
+    overlay.graphics.opacity = 0.85;
+    this.add(overlay);
+
+    // STAGE CLEAR text
+    const clearLabel = new Label({
+      text: 'STAGE CLEAR!',
+      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 - 40),
+      font: new Font({
+        size: 32,
+        unit: FontUnit.Px,
+        color: ARCADE_SUCCESS,
+        family: '"Press Start 2P", monospace',
+        shadow: {
+          blur: 20,
+          offset: new Vector(0, 0),
+          color: ARCADE_SUCCESS
+        }
+      })
+    });
+    clearLabel.anchor.setTo(0.5, 0.5);
+    clearLabel.z = 2001;
+    this.add(clearLabel);
+
+    // Score/stats subtext
+    const currentLevel = LevelManager.getInstance().getCurrentLevel();
+    const subLabel = new Label({
+      text: `STAGE ${currentLevel} COMPLETE`,
+      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 + 20),
+      font: new Font({
+        size: 10,
+        unit: FontUnit.Px,
+        color: ARCADE_YELLOW,
+        family: '"Press Start 2P", monospace',
+        shadow: {
+          blur: 6,
+          offset: new Vector(0, 0),
+          color: ARCADE_YELLOW
+        }
+      })
+    });
+    subLabel.anchor.setTo(0.5, 0.5);
+    subLabel.z = 2001;
+    this.add(subLabel);
+
+    // Continuing text
+    const continueLabel = new Label({
+      text: 'ADVANCING...',
+      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 + 60),
+      font: new Font({
+        size: 8,
+        unit: FontUnit.Px,
+        color: Color.fromHex("#8888aa"),
+        family: '"Press Start 2P", monospace'
+      })
+    });
+    continueLabel.anchor.setTo(0.5, 0.5);
+    continueLabel.z = 2001;
+    this.add(continueLabel);
+  }
+
   private levelComplete() {
     this.isLevelComplete = true;
     console.log('Level Complete!');
+
+    // Show arcade-style level complete overlay
+    this.showLevelCompleteOverlay();
 
     // Update persisted health before moving on
     if (this.player && !this.player.isKilled()) {
@@ -274,7 +539,7 @@ export class Level extends Scene {
         LevelManager.getInstance().incrementLevel();
         this.engine.goToScene('hub');
       },
-      interval: 1000,
+      interval: 2000,
       repeats: false
     });
 

@@ -8,7 +8,7 @@ import { Level } from '@/scenes/Level'
 const engine = new Engine({
   width: GameConfig.width,
   height: GameConfig.height,
-  backgroundColor: Color.fromHex("#0a0a0a"), // Deep almost-black
+  backgroundColor: Color.fromHex("#0a0a12"), // Arcade dark blue-black
   pixelArt: false,
   pixelRatio: 2,
   displayMode: DisplayMode.FitScreen

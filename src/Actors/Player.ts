@@ -6,10 +6,11 @@ import { Projectile } from '@/Actors/Projectile';
 import { Enemy } from '@/Actors/enemies/Enemy';
 import { ParticleSystem } from '@/utils/ParticleSystem';
 
-// Player visual constants using Material Design color palette
-const PLAYER_COLOR = Color.fromHex("#42a5f5"); // Material Blue 400
-const HEALTH_BAR_BG = Color.fromHex("#424242"); // Dark Grey
-const HEALTH_BAR_FG = Color.fromHex("#66bb6a"); // Material Green 400
+// Arcade color palette
+const ARCADE_CYAN = Color.fromHex("#00ffff");
+const ARCADE_DANGER = Color.fromHex("#ff3366");
+const ARCADE_SUCCESS = Color.fromHex("#00ff88");
+const ARCADE_BG = Color.fromHex("#0a0a12");
 
 export class Player extends Actor {
   private speed: number = GameConfig.player.speed;
@@ -22,8 +23,6 @@ export class Player extends Actor {
 
   // Buff state
   private tetherBuffActive: boolean = false;
-  private tetherHealTimer: number = 0;
-  private readonly HEAL_INTERVAL: number = GameConfig.familiar.buffs.healInterval;
 
   // Shooting state
   private shootCooldownTimer: number = 0;
@@ -41,7 +40,7 @@ export class Player extends Actor {
       name: 'player',
       pos: new Vector(10, centerY),
       radius: radius,
-      color: PLAYER_COLOR,
+      color: ARCADE_CYAN,
       collisionType: CollisionType.Active,
       collisionGroup: PlayerCollisionGroupConfig,
     });
@@ -53,45 +52,127 @@ export class Player extends Actor {
 
   public onInitialize(_engine: Engine): void {
     /**
-     * Set up health bar visualization above the player
+     * Set up arcade-styled health bar visualization above the player
      * Uses graphics.onPostDraw to render UI elements relative to the actor
      */
     this.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
       ctx.save();
 
-      // Hit flash effect - red tint when taking damage
+      // Hit flash effect - neon red flash when taking damage
       if (this.hitFlashTimer > 0) {
         const flashIntensity = this.hitFlashTimer / this.HIT_FLASH_DURATION;
-        const flashColor = Color.fromHex("#ff0000"); // Red flash
+        const flashColor = ARCADE_DANGER;
         const actorSize = this.collider.bounds.width || this.width || 20;
-        ctx.opacity = flashIntensity * 0.5; // Fade from 50% to 0%
-        ctx.drawCircle(Vector.Zero, actorSize * 1.5, flashColor);
-        ctx.opacity = 1; // Reset opacity
+        ctx.opacity = flashIntensity * 0.6;
+        ctx.drawCircle(Vector.Zero, actorSize * 1.8, flashColor);
+        ctx.opacity = 1;
       }
 
       // Calculate health bar dimensions based on actor size
       const actorSize = this.collider.bounds.width || this.width || 20;
-      const barWidth = actorSize * 2;
-      const barHeight = 4;
-      const barOffsetY = -(actorSize / 2) - barHeight - 8;
+      const barWidth = actorSize * 2.5;
+      const barHeight = 6;
+      const barOffsetY = -(actorSize / 2) - barHeight - 10;
 
       // Calculate health percentage (clamped to 0-1)
       const healthPercent = Math.max(0, this.health / this.maxHealth);
 
-      // Draw background bar (full width, dark)
+      // Draw outer border (arcade glow effect)
+      ctx.drawRectangle(
+        new Vector(-barWidth / 2 - 2, barOffsetY - 2),
+        barWidth + 4,
+        barHeight + 4,
+        ARCADE_CYAN
+      );
+
+      // Draw background bar (dark)
       ctx.drawRectangle(
         new Vector(-barWidth / 2, barOffsetY),
         barWidth,
         barHeight,
-        HEALTH_BAR_BG
+        ARCADE_BG
       );
 
-      // Draw health bar (scaled by health percentage, green)
+      // Draw health bar with gradient effect based on health
+      const healthColor = healthPercent > 0.5 ? ARCADE_SUCCESS : 
+                          healthPercent > 0.25 ? Color.fromHex("#ffff00") : 
+                          ARCADE_DANGER;
+
       ctx.drawRectangle(
         new Vector(-barWidth / 2, barOffsetY),
         barWidth * healthPercent,
         barHeight,
-        HEALTH_BAR_FG
+        healthColor
+      );
+
+      // Draw inner highlight for 3D effect
+      if (healthPercent > 0) {
+        ctx.drawRectangle(
+          new Vector(-barWidth / 2, barOffsetY),
+          barWidth * healthPercent,
+          barHeight / 3,
+          Color.fromHex("#ffffff30")
+        );
+      }
+
+      // Draw corner brackets (arcade style)
+      const bracketSize = 4;
+      const bracketColor = ARCADE_CYAN;
+
+      // Top-left bracket
+      ctx.drawLine(
+        new Vector(-barWidth / 2 - 4, barOffsetY - 4),
+        new Vector(-barWidth / 2 - 4 + bracketSize, barOffsetY - 4),
+        bracketColor,
+        2
+      );
+      ctx.drawLine(
+        new Vector(-barWidth / 2 - 4, barOffsetY - 4),
+        new Vector(-barWidth / 2 - 4, barOffsetY - 4 + bracketSize),
+        bracketColor,
+        2
+      );
+
+      // Top-right bracket
+      ctx.drawLine(
+        new Vector(barWidth / 2 + 4, barOffsetY - 4),
+        new Vector(barWidth / 2 + 4 - bracketSize, barOffsetY - 4),
+        bracketColor,
+        2
+      );
+      ctx.drawLine(
+        new Vector(barWidth / 2 + 4, barOffsetY - 4),
+        new Vector(barWidth / 2 + 4, barOffsetY - 4 + bracketSize),
+        bracketColor,
+        2
+      );
+
+      // Bottom-left bracket
+      ctx.drawLine(
+        new Vector(-barWidth / 2 - 4, barOffsetY + barHeight + 4),
+        new Vector(-barWidth / 2 - 4 + bracketSize, barOffsetY + barHeight + 4),
+        bracketColor,
+        2
+      );
+      ctx.drawLine(
+        new Vector(-barWidth / 2 - 4, barOffsetY + barHeight + 4),
+        new Vector(-barWidth / 2 - 4, barOffsetY + barHeight + 4 - bracketSize),
+        bracketColor,
+        2
+      );
+
+      // Bottom-right bracket
+      ctx.drawLine(
+        new Vector(barWidth / 2 + 4, barOffsetY + barHeight + 4),
+        new Vector(barWidth / 2 + 4 - bracketSize, barOffsetY + barHeight + 4),
+        bracketColor,
+        2
+      );
+      ctx.drawLine(
+        new Vector(barWidth / 2 + 4, barOffsetY + barHeight + 4),
+        new Vector(barWidth / 2 + 4, barOffsetY + barHeight + 4 - bracketSize),
+        bracketColor,
+        2
       );
 
       ctx.restore();
@@ -145,16 +226,6 @@ export class Player extends Actor {
     if ((isHoldingShift || pressedSpace) && this.shootCooldownTimer <= 0) {
       this.shoot(engine);
       this.shootCooldownTimer = this.SHOOT_COOLDOWN;
-    }
-
-    // Handle tether buff regeneration
-    // When tethered to familiar, player regenerates health over time
-    if (this.tetherBuffActive && this.health < this.maxHealth) {
-      this.tetherHealTimer += _delta;
-      if (this.tetherHealTimer >= this.HEAL_INTERVAL) {
-        this.health = Math.min(this.health + GameConfig.familiar.buffs.healAmount, this.maxHealth);
-        this.tetherHealTimer = 0;
-      }
     }
 
     // Update hit flash timer
@@ -317,5 +388,33 @@ export class Player extends Actor {
   public resetAccuracy(): void {
     this.shotsFired = 0;
     this.hitsLanded = 0;
+  }
+
+  /**
+   * Get active buffs and effects
+   * Returns an array of buff objects with name and description
+   */
+  public getActiveBuffs(): Array<{ name: string; description: string }> {
+    const buffs: Array<{ name: string; description: string }> = [];
+    
+    if (this.tetherBuffActive) {
+      const damageReduction = (1 - GameConfig.familiar.buffs.damageReduction) * 100;
+      buffs.push({
+        name: 'Tether Buff',
+        description: `${damageReduction}% damage reduction`
+      });
+    }
+    
+    return buffs;
+  }
+
+  /**
+   * Check if a specific buff is active
+   */
+  public hasBuff(buffName: string): boolean {
+    if (buffName === 'Tether Buff') {
+      return this.tetherBuffActive;
+    }
+    return false;
   }
 }
