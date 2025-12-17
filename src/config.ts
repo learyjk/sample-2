@@ -29,6 +29,10 @@ export const GameConfig = {
     tetherRadius: 100, // Radius for tether buff activation
     buffs: {
       damageReduction: 0.8, // 20% reduction (multiplier)
+    },
+    novaBlast: {
+      damage: 75, // High damage to make it worth the risk
+      cooldown: 3000, // 3 seconds cooldown
     }
   },
 

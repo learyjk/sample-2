@@ -1,4 +1,4 @@
-import { Scene, Engine, Vector, Color, Label, Font, FontUnit, Actor, CollisionType } from 'excalibur';
+import { Scene, Engine, Vector, Color, Label, Font, FontUnit, Actor, CollisionType, TextAlign, BaseAlign } from 'excalibur';
 import type { ExcaliburGraphicsContext } from 'excalibur';
 import { LevelManager } from '../LevelManager';
 import { GameConfig } from '@/config';
@@ -34,7 +34,7 @@ export class Hub extends Scene {
             // Draw grid lines
             const gridSize = 50;
             const lineColor = Color.fromHex("#ff00ff15");
-            
+
             for (let x = 0; x <= GameConfig.width; x += gridSize) {
                 ctx.drawLine(
                     new Vector(x - GameConfig.width / 2, -GameConfig.height / 2),
@@ -62,10 +62,12 @@ export class Hub extends Scene {
             text: 'NEON STRIKER',
             pos: new Vector(engine.halfDrawWidth, 180),
             font: new Font({
-                size: 42,
+                size: 32,
                 unit: FontUnit.Px,
                 color: ARCADE_MAGENTA,
                 family: '"Press Start 2P", monospace',
+                textAlign: TextAlign.Center,
+                baseAlign: BaseAlign.Middle,
                 shadow: {
                     blur: 15,
                     offset: new Vector(0, 0),
@@ -73,7 +75,6 @@ export class Hub extends Scene {
                 }
             })
         });
-        this.titleLabel.anchor.setTo(0.5, 0.5);
         this.add(this.titleLabel);
 
         // Subtitle
@@ -85,6 +86,8 @@ export class Hub extends Scene {
                 unit: FontUnit.Px,
                 color: ARCADE_CYAN,
                 family: '"Orbitron", monospace',
+                textAlign: TextAlign.Center,
+                baseAlign: BaseAlign.Middle,
                 shadow: {
                     blur: 10,
                     offset: new Vector(0, 0),
@@ -92,7 +95,6 @@ export class Hub extends Scene {
                 }
             })
         });
-        this.subtitleLabel.anchor.setTo(0.5, 0.5);
         this.add(this.subtitleLabel);
 
         // Level info
@@ -104,6 +106,8 @@ export class Hub extends Scene {
                 unit: FontUnit.Px,
                 color: ARCADE_YELLOW,
                 family: '"Press Start 2P", monospace',
+                textAlign: TextAlign.Center,
+                baseAlign: BaseAlign.Middle,
                 shadow: {
                     blur: 8,
                     offset: new Vector(0, 0),
@@ -111,21 +115,21 @@ export class Hub extends Scene {
                 }
             })
         });
-        this.levelLabel.anchor.setTo(0.5, 0.5);
         this.add(this.levelLabel);
 
         // Instructions
         this.instructionsLabel = new Label({
-            text: 'WASD TO MOVE • SPACE TO SHOOT',
+            text: 'WASD MOVE • SPACE SHOOT • / NOVA BLAST',
             pos: new Vector(engine.halfDrawWidth, 550),
             font: new Font({
-                size: 10,
+                size: 9,
                 unit: FontUnit.Px,
                 color: Color.fromHex("#8888aa"),
-                family: '"Press Start 2P", monospace'
+                family: '"Press Start 2P", monospace',
+                textAlign: TextAlign.Center,
+                baseAlign: BaseAlign.Middle
             })
         });
-        this.instructionsLabel.anchor.setTo(0.5, 0.5);
         this.add(this.instructionsLabel);
 
         // Blinking "INSERT COIN" style text
@@ -137,6 +141,8 @@ export class Hub extends Scene {
                 unit: FontUnit.Px,
                 color: ARCADE_CYAN,
                 family: '"Press Start 2P", monospace',
+                textAlign: TextAlign.Center,
+                baseAlign: BaseAlign.Middle,
                 shadow: {
                     blur: 10,
                     offset: new Vector(0, 0),
@@ -144,7 +150,6 @@ export class Hub extends Scene {
                 }
             })
         });
-        this.blinkLabel.anchor.setTo(0.5, 0.5);
         this.add(this.blinkLabel);
 
         // Credit text
@@ -155,10 +160,11 @@ export class Hub extends Scene {
                 size: 8,
                 unit: FontUnit.Px,
                 color: Color.fromHex("#444466"),
-                family: '"Orbitron", monospace'
+                family: '"Orbitron", monospace',
+                textAlign: TextAlign.Center,
+                baseAlign: BaseAlign.Middle
             })
         });
-        creditLabel.anchor.setTo(0.5, 0.5);
         this.add(creditLabel);
     }
 
@@ -166,7 +172,7 @@ export class Hub extends Scene {
         // Top-left corner decoration
         const cornerSize = 80;
         const cornerThickness = 3;
-        
+
         // Create corner bracket actors
         const corners = [
             { x: 30, y: 30, flipX: false, flipY: false },
@@ -188,7 +194,7 @@ export class Hub extends Scene {
             actor.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
                 const xDir = corner.flipX ? -1 : 1;
                 const yDir = corner.flipY ? -1 : 1;
-                
+
                 // Horizontal line
                 ctx.drawLine(
                     Vector.Zero,
@@ -196,7 +202,7 @@ export class Hub extends Scene {
                     ARCADE_CYAN,
                     cornerThickness
                 );
-                
+
                 // Vertical line
                 ctx.drawLine(
                     Vector.Zero,

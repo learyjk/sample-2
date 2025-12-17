@@ -1,4 +1,4 @@
-import { Scene, Engine, Vector, Color, Actor, CollisionType, Timer, Label, Font, FontUnit } from 'excalibur';
+import { Scene, Engine, Vector, Color, Actor, CollisionType, Timer, Label, Font, FontUnit, TextAlign, BaseAlign } from 'excalibur';
 import type { ExcaliburGraphicsContext } from 'excalibur';
 import { GameConfig } from '@/config';
 import { Player } from '@/Actors/Player';
@@ -337,6 +337,8 @@ export class Level extends Scene {
         unit: FontUnit.Px,
         color: ARCADE_YELLOW,
         family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
         shadow: {
           blur: 6,
           offset: new Vector(0, 0),
@@ -344,7 +346,6 @@ export class Level extends Scene {
         }
       })
     });
-    levelLabel.anchor.setTo(0.5, 0.5);
     this.add(levelLabel);
 
     // Enemy counter
@@ -379,6 +380,8 @@ export class Level extends Scene {
         unit: FontUnit.Px,
         color: ARCADE_MAGENTA,
         family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
         shadow: {
           blur: 4,
           offset: new Vector(0, 0),
@@ -386,7 +389,6 @@ export class Level extends Scene {
         }
       })
     });
-    enemyLabel.anchor.setTo(0.5, 0.5);
     
     // Update enemy count on pre-update
     enemyLabel.onPreUpdate = () => {
@@ -421,6 +423,8 @@ export class Level extends Scene {
         unit: FontUnit.Px,
         color: ARCADE_DANGER,
         family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
         shadow: {
           blur: 20,
           offset: new Vector(0, 0),
@@ -428,7 +432,6 @@ export class Level extends Scene {
         }
       })
     });
-    gameOverLabel.anchor.setTo(0.5, 0.5);
     gameOverLabel.z = 2001;
     this.add(gameOverLabel);
 
@@ -440,16 +443,17 @@ export class Level extends Scene {
         size: 10,
         unit: FontUnit.Px,
         color: Color.fromHex("#8888aa"),
-        family: '"Press Start 2P", monospace'
+        family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle
       })
     });
-    subLabel.anchor.setTo(0.5, 0.5);
     subLabel.z = 2001;
     this.add(subLabel);
   }
 
   /**
-   * Show arcade-style level complete overlay
+   * Show arcade-style level complete overlay with powerup selection
    */
   private showLevelCompleteOverlay(): void {
     // Dark overlay
@@ -467,12 +471,14 @@ export class Level extends Scene {
     // STAGE CLEAR text
     const clearLabel = new Label({
       text: 'STAGE CLEAR!',
-      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 - 40),
+      pos: new Vector(GameConfig.width / 2, 120),
       font: new Font({
         size: 32,
         unit: FontUnit.Px,
         color: ARCADE_SUCCESS,
         family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
         shadow: {
           blur: 20,
           offset: new Vector(0, 0),
@@ -480,7 +486,6 @@ export class Level extends Scene {
         }
       })
     });
-    clearLabel.anchor.setTo(0.5, 0.5);
     clearLabel.z = 2001;
     this.add(clearLabel);
 
@@ -488,12 +493,14 @@ export class Level extends Scene {
     const currentLevel = LevelManager.getInstance().getCurrentLevel();
     const subLabel = new Label({
       text: `STAGE ${currentLevel} COMPLETE`,
-      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 + 20),
+      pos: new Vector(GameConfig.width / 2, 170),
       font: new Font({
         size: 10,
         unit: FontUnit.Px,
         color: ARCADE_YELLOW,
         family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
         shadow: {
           blur: 6,
           offset: new Vector(0, 0),
@@ -501,49 +508,203 @@ export class Level extends Scene {
         }
       })
     });
-    subLabel.anchor.setTo(0.5, 0.5);
     subLabel.z = 2001;
     this.add(subLabel);
 
-    // Continuing text
-    const continueLabel = new Label({
-      text: 'ADVANCING...',
-      pos: new Vector(GameConfig.width / 2, GameConfig.height / 2 + 60),
+    // "Choose your upgrade" text
+    const chooseLabel = new Label({
+      text: 'CHOOSE YOUR UPGRADE',
+      pos: new Vector(GameConfig.width / 2, 240),
+      font: new Font({
+        size: 12,
+        unit: FontUnit.Px,
+        color: ARCADE_CYAN,
+        family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
+        shadow: {
+          blur: 10,
+          offset: new Vector(0, 0),
+          color: ARCADE_CYAN
+        }
+      })
+    });
+    chooseLabel.z = 2001;
+    this.add(chooseLabel);
+
+    // Create 3 powerup cards
+    const powerups = [
+      { id: 'damage', name: 'DAMAGE+', description: 'Increase attack power', color: ARCADE_DANGER },
+      { id: 'speed', name: 'SPEED+', description: 'Move faster', color: ARCADE_CYAN },
+      { id: 'health', name: 'HEALTH+', description: 'Restore health', color: ARCADE_SUCCESS }
+    ];
+
+    const cardWidth = 180;
+    const cardHeight = 280;
+    const cardSpacing = 30;
+    const totalWidth = (cardWidth * 3) + (cardSpacing * 2);
+    const startX = (GameConfig.width - totalWidth) / 2 + cardWidth / 2;
+    const cardY = GameConfig.height / 2 + 80;
+
+    powerups.forEach((powerup, index) => {
+      const cardX = startX + index * (cardWidth + cardSpacing);
+      this.createPowerupCard(cardX, cardY, cardWidth, cardHeight, powerup);
+    });
+  }
+
+  /**
+   * Create a clickable powerup card
+   */
+  private createPowerupCard(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    powerup: { id: string; name: string; description: string; color: Color }
+  ): void {
+    // Card background actor
+    const card = new Actor({
+      pos: new Vector(x, y),
+      width: width,
+      height: height,
+      color: Color.fromHex("#0a0a12"),
+      collisionType: CollisionType.PreventCollision,
+      z: 2002
+    });
+
+    // Custom draw for card styling
+    const borderColor = powerup.color.clone();
+    card.graphics.onPostDraw = (ctx: ExcaliburGraphicsContext) => {
+      // Border glow
+      ctx.drawRectangle(
+        new Vector(-width / 2 - 2, -height / 2 - 2),
+        width + 4,
+        height + 4,
+        borderColor
+      );
+
+      // Inner background
+      ctx.drawRectangle(
+        new Vector(-width / 2, -height / 2),
+        width,
+        height,
+        Color.fromHex("#0a0a12")
+      );
+
+      // Icon placeholder circle
+      const iconRadius = 40;
+      ctx.drawCircle(
+        new Vector(0, -height / 4),
+        iconRadius,
+        borderColor
+      );
+
+      // Question mark placeholder
+      ctx.drawCircle(
+        new Vector(0, -height / 4),
+        iconRadius - 6,
+        Color.fromHex("#1a1a24")
+      );
+    };
+
+    // Make card interactive
+    card.on('pointerenter', () => {
+      card.scale = new Vector(1.05, 1.05);
+    });
+
+    card.on('pointerleave', () => {
+      card.scale = new Vector(1, 1);
+    });
+
+    card.on('pointerup', () => {
+      this.selectPowerup(powerup.id);
+    });
+
+    this.add(card);
+
+    // Powerup name label
+    const nameLabel = new Label({
+      text: powerup.name,
+      pos: new Vector(x, y + 30),
+      font: new Font({
+        size: 14,
+        unit: FontUnit.Px,
+        color: powerup.color,
+        family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
+        shadow: {
+          blur: 8,
+          offset: new Vector(0, 0),
+          color: powerup.color
+        }
+      })
+    });
+    nameLabel.z = 2003;
+    this.add(nameLabel);
+
+    // Description label
+    const descLabel = new Label({
+      text: powerup.description,
+      pos: new Vector(x, y + 70),
       font: new Font({
         size: 8,
         unit: FontUnit.Px,
         color: Color.fromHex("#8888aa"),
-        family: '"Press Start 2P", monospace'
+        family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle
       })
     });
-    continueLabel.anchor.setTo(0.5, 0.5);
-    continueLabel.z = 2001;
-    this.add(continueLabel);
+    descLabel.z = 2003;
+    this.add(descLabel);
+
+    // "?" placeholder text in the icon
+    const iconLabel = new Label({
+      text: '?',
+      pos: new Vector(x, y - height / 4),
+      font: new Font({
+        size: 32,
+        unit: FontUnit.Px,
+        color: powerup.color,
+        family: '"Press Start 2P", monospace',
+        textAlign: TextAlign.Center,
+        baseAlign: BaseAlign.Middle,
+        shadow: {
+          blur: 10,
+          offset: new Vector(0, 0),
+          color: powerup.color
+        }
+      })
+    });
+    iconLabel.z = 2003;
+    this.add(iconLabel);
+  }
+
+  /**
+   * Handle powerup selection
+   */
+  private selectPowerup(powerupId: string): void {
+    console.log(`Selected powerup: ${powerupId}`);
+
+    // TODO: Apply powerup effect based on powerupId
+    // For now, just log and proceed to next level
+
+    // Increment level and go to next stage
+    LevelManager.getInstance().incrementLevel();
+    this.engine.goToScene('level');
   }
 
   private levelComplete() {
     this.isLevelComplete = true;
     console.log('Level Complete!');
 
-    // Show arcade-style level complete overlay
-    this.showLevelCompleteOverlay();
-
-    // Update persisted health before moving on
+    // Update persisted health before showing powerup selection
     if (this.player && !this.player.isKilled()) {
       LevelManager.getInstance().setPlayerHealth(this.player.health);
     }
 
-    // Add a small delay before transitioning
-    const timer = new Timer({
-      fcn: () => {
-        LevelManager.getInstance().incrementLevel();
-        this.engine.goToScene('hub');
-      },
-      interval: 2000,
-      repeats: false
-    });
-
-    this.add(timer);
-    timer.start();
+    // Show powerup selection overlay (waits for user input)
+    this.showLevelCompleteOverlay();
   }
 }

@@ -314,4 +314,97 @@ export class ParticleSystem {
             engine.add(particle);
         }
     }
+
+    /**
+     * Create nova blast explosion effect - radiating particles from center
+     */
+    static createNovaBlast(
+        engine: Engine,
+        position: Vector,
+        radius: number
+    ): void {
+        const novaColor = Color.fromHex("#ff00ff");
+        const novaColorBright = Color.fromHex("#ff66ff");
+        const novaColorWhite = Color.White;
+
+        // Create radiating particles in all directions
+        const particleCount = 24;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2;
+            const speed = 200 + Math.random() * 100;
+            const vel = new Vector(Math.cos(angle), Math.sin(angle)).scale(speed);
+
+            const colors = [novaColor, novaColorBright, novaColorWhite];
+            const startColor = colors[Math.floor(Math.random() * colors.length)];
+
+            const particle = this.getParticle(
+                position.clone(),
+                vel,
+                startColor,
+                Color.Transparent,
+                6 + Math.random() * 4,
+                1,
+                400 + Math.random() * 200
+            );
+
+            if (particle) {
+                engine.add(particle);
+            }
+        }
+
+        // Create inner burst for extra impact
+        this.createBurst(engine, position, {
+            count: 16,
+            colors: [novaColor, novaColorBright, novaColorWhite],
+            speed: 150,
+            size: 8,
+            lifetime: 300,
+            spread: Math.PI * 2,
+        });
+
+        // Create sparks
+        for (let i = 0; i < 12; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * radius * 0.8;
+            const sparkPos = position.add(new Vector(Math.cos(angle) * dist, Math.sin(angle) * dist));
+            const sparkVel = new Vector(
+                (Math.random() - 0.5) * 100,
+                (Math.random() - 0.5) * 100
+            );
+
+            const particle = this.getParticle(
+                sparkPos,
+                sparkVel,
+                novaColorBright,
+                Color.Transparent,
+                3,
+                0.5,
+                250 + Math.random() * 150
+            );
+
+            if (particle) {
+                engine.add(particle);
+            }
+        }
+    }
+
+    /**
+     * Create hit effect on enemy when struck by nova blast
+     */
+    static createNovaHit(
+        engine: Engine,
+        position: Vector
+    ): void {
+        const novaColor = Color.fromHex("#ff00ff");
+        const novaColorBright = Color.fromHex("#ff66ff");
+
+        this.createBurst(engine, position, {
+            count: 10,
+            colors: [novaColor, novaColorBright, Color.White],
+            speed: 80,
+            size: 5,
+            lifetime: 350,
+            spread: Math.PI * 2,
+        });
+    }
 }
